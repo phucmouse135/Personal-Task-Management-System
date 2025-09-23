@@ -17,7 +17,7 @@ import org.springframework.security.web.SecurityFilterChain;
 public class SecurityConfig {
 
     private static final String[] PUBLIC_URLS = {
-
+            "/auth/token", "/auth/introspect", "/auth/logout", "/auth/refresh", "/users/create"
     };
     private final CustomJwtDecoder customJwtDecoder;
 

@@ -42,3 +42,5 @@ springdoc:
 jwt:
   secret: ${JWT_SECRET:mysecretkeymysecretkeymysecretkey}
   expiration: ${JWT_EXPIRATION:3600000} # 1 hour in milliseconds
+server:
+  port: ${SERVER_PORT:8080}

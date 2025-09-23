@@ -10,6 +10,7 @@ import org.example.cv.models.responses.RoleResponse;
 import org.example.cv.repositories.RoleRepository;
 import org.example.cv.services.RoleService;
 import org.example.cv.utils.mapper.RoleMapper;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -29,6 +30,7 @@ public class RoleServiceImpl implements RoleService {
      */
     @Override
     @Transactional
+    @PreAuthorize("hasRole('ADMIN')")
     public RoleResponse createRole(RoleRequest request) {
         log.info("Creating role: {}", request.getName());
         RoleEntity role = roleMapper.toEntity(request);
@@ -41,6 +43,7 @@ public class RoleServiceImpl implements RoleService {
      * @return
      */
     @Override
+    @PreAuthorize("hasRole('ADMIN')")
     public List<RoleResponse> getAllRoles() {
         log.info("Getting all roles");
         return roleRepository.findAll().stream().map(roleMapper::toResponse).toList();
@@ -52,6 +55,7 @@ public class RoleServiceImpl implements RoleService {
      */
     @Override
     @Transactional
+    @PreAuthorize("hasRole('ADMIN')")
     public void softdeleteRole(Long id) {
         log.info("Soft deleting role by id: {}", id);
         roleRepository.softDeleteByIds(List.of(id));
