@@ -1,0 +1,59 @@
+package org.example.cv.services.impl;
+
+import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
+import lombok.extern.slf4j.Slf4j;
+import org.example.cv.models.entities.RoleEntity;
+import org.example.cv.models.requests.RoleRequest;
+import org.example.cv.models.responses.RoleResponse;
+import org.example.cv.repositories.RoleRepository;
+import org.example.cv.services.RoleService;
+import org.example.cv.utils.mapper.RoleMapper;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+
+@Service
+@RequiredArgsConstructor
+@FieldDefaults(level = lombok.AccessLevel.PRIVATE, makeFinal = true)
+@Slf4j
+public class RoleServiceImpl implements RoleService {
+    RoleMapper roleMapper;
+    RoleRepository roleRepository;
+
+    /**
+     * Create role
+     * @param request
+     * @return
+     */
+    @Override
+    @Transactional
+    public RoleResponse createRole(RoleRequest request) {
+        log.info("Creating role: {}", request.getName());
+        RoleEntity role = roleMapper.toEntity(request);
+        role = roleRepository.save(role);
+        return roleMapper.toResponse(role);
+    }
+
+    /**
+     * Get all roles
+     * @return
+     */
+    @Override
+    public List<RoleResponse> getAllRoles() {
+        log.info("Getting all roles");
+        return roleRepository.findAll().stream().map(roleMapper::toResponse).toList();
+    }
+
+    /**
+     * Soft delete role by id
+     * @param id
+     */
+    @Override
+    @Transactional
+    public void softdeleteRole(Long id) {
+        log.info("Soft deleting role by id: {}", id);
+        roleRepository.softDeleteByIds(List.of(id));
+    }
+}
