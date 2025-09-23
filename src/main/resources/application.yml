@@ -21,6 +21,8 @@ spring:
     locations: classpath:db/migration
     baseline-on-migrate: true
     url: ${SPRING_FLYWAY_URL:${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/cvdb}}
+    user: ${SPRING_FLYWAY_USER:${SPRING_DATASOURCE_USERNAME:postgres}}
+    password: ${SPRING_FLYWAY_PASSWORD:${SPRING_DATASOURCE_PASSWORD:123456}}
   security:
     user:
       name: ${SPRING_SECURITY_USER_NAME:admin}

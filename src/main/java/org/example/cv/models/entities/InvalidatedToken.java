@@ -6,6 +6,7 @@ import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import org.example.cv.models.entities.base.BaseEntity;
 import org.example.cv.models.requests.validationgroups.OnCreate;
 import org.example.cv.models.requests.validationgroups.OnUpdate;
 
@@ -20,7 +21,7 @@ import java.util.Date;
 @Entity
 @Table(name = "invalidated_tokens")
 @Schema(name = "InvalidatedToken", description = "Entity representing an invalidated token")
-public class InvalidatedToken {
+public class InvalidatedToken extends BaseEntity {
 
     @Id
     @Schema(description = "Unique identifier of the invalidated token", example = "1")

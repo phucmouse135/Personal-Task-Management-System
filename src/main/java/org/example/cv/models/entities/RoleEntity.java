@@ -8,6 +8,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.example.cv.models.entities.base.BaseEntity;
 
 @Data
 @Builder
@@ -16,7 +17,7 @@ import lombok.NoArgsConstructor;
 @Entity
 @Table(name = "roles")
 @Schema(name = "RoleEntity", description = "Entity representing a user role")
-public class RoleEntity {
+public class RoleEntity extends BaseEntity {
     @Id
     @NotBlank(message = "Role name is required")
     @Size(max = 50, message = "Role name must not exceed 50 characters")

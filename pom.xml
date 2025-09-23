@@ -64,12 +64,13 @@
             <artifactId>slf4j-api</artifactId>
             <version>2.0.9</version> <!-- Use the latest version -->
         </dependency>
+        <!-- https://mvnrepository.com/artifact/ch.qos.logback/logback-classic -->
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
-            <version>1.4.11</version> <!-- Use the latest version -->
+            <version>1.5.18</version>
+            <scope>compile</scope>
         </dependency>
-
 
         <!-- Flyway Migration -->
         <dependency>
@@ -171,41 +172,28 @@
             </plugin>
             <!-- Spring Boot Maven Plugin -->
             <plugin>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-maven-plugin</artifactId>
-            </plugin>
-
-            <!-- Compiler plugin -->
-            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.11.0</version>
                 <configuration>
-                    <release>${java.version}</release>
-                </configuration>
-            </plugin>
-
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.11.0</version>
-                <configuration>
+                    <source>17</source>
+                    <target>17</target>
                     <annotationProcessorPaths>
                         <path>
                             <groupId>org.mapstruct</groupId>
                             <artifactId>mapstruct-processor</artifactId>
                             <version>1.5.5.Final</version>
                         </path>
+                        <!-- Include Lombok if needed -->
+                        <path>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                            <version>1.18.34</version>
+                        </path>
                     </annotationProcessorPaths>
                 </configuration>
             </plugin>
 
-            <!-- Surefire plugin (chạy test) -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.2.5</version> <!-- ổn định, tránh lỗi timeout -->
-            </plugin>
         </plugins>
     </build>
 

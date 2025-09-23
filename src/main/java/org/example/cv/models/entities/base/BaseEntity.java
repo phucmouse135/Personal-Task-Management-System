@@ -14,9 +14,8 @@ import java.time.Instant;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-@Builder
 @Schema(name = "BaseEntity", description = "Base entity with common fields")
-public abstract class BaseEntity {
+public class BaseEntity {
     @CreationTimestamp
     @Column(name = "created_at")
     @Schema(description = "Creation timestamp", example = "2023-10-01T12:00:00Z")
