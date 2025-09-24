@@ -14,10 +14,7 @@ import org.example.cv.models.responses.ApiResponse;
 import org.example.cv.models.responses.AuthenticationResponse;
 import org.example.cv.models.responses.IntrospectResponse;
 import org.example.cv.services.AuthenticationService;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.text.ParseException;
 
@@ -83,6 +80,17 @@ public class AuthenticationController {
     @PostMapping(value = "/token", consumes = "application/json", produces = "application/json")
     ApiResponse<AuthenticationResponse> authenticate(@RequestBody AuthenticationRequest request) {
         var result = authenticationService.authenticate(request);
+        return ApiResponse.<AuthenticationResponse>builder().result(result).build();
+    }
+
+    /**
+     * Endpoint to authenticate a user via an external provider using an authorization code.
+     * @param code the authorization code received from the external provider
+     */
+    @Operation(summary = "Outbound Authenticate", description = "Authenticate a user via an external provider using an authorization code")
+    @PostMapping(value = "/outbound/authentication", consumes = "application/json", produces = "application/json")
+    ApiResponse<AuthenticationResponse> outboundAuthenticate(@RequestParam("code") String code) {
+        var result = authenticationService.outboundAuthenticate(code);
         return ApiResponse.<AuthenticationResponse>builder().result(result).build();
     }
 

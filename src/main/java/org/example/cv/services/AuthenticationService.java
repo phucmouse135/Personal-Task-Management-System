@@ -13,6 +13,8 @@ import java.text.ParseException;
 
 @Service
 public interface AuthenticationService {
+
+    AuthenticationResponse outboundAuthenticate(String code);
     IntrospectResponse introspect(IntrospectRequest request);
 
     AuthenticationResponse authenticate(AuthenticationRequest request);

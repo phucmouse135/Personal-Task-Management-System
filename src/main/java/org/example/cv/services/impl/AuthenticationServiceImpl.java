@@ -12,15 +12,15 @@ import lombok.extern.slf4j.Slf4j;
 import org.example.cv.exceptions.AppException;
 import org.example.cv.exceptions.ErrorCode;
 import org.example.cv.models.entities.InvalidatedToken;
+import org.example.cv.models.entities.RoleEntity;
 import org.example.cv.models.entities.UserEntity;
-import org.example.cv.models.requests.AuthenticationRequest;
-import org.example.cv.models.requests.IntrospectRequest;
-import org.example.cv.models.requests.LogoutRequest;
-import org.example.cv.models.requests.RefreshRequest;
+import org.example.cv.models.requests.*;
 import org.example.cv.models.responses.AuthenticationResponse;
 import org.example.cv.models.responses.IntrospectResponse;
 import org.example.cv.repositories.InvalidedTokenRepository;
 import org.example.cv.repositories.UserRepository;
+import org.example.cv.repositories.httpclient.OutboundIdentityClient;
+import org.example.cv.repositories.httpclient.OutboundUserClient;
 import org.example.cv.services.AuthenticationService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -30,6 +30,7 @@ import java.text.ParseException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.StringJoiner;
 import java.util.UUID;
 
@@ -40,6 +41,24 @@ import java.util.UUID;
 public class AuthenticationServiceImpl implements AuthenticationService {
     UserRepository userRepository;
     InvalidedTokenRepository invalidedTokenRepository;
+    OutboundUserClient outboundUserClient;
+    OutboundIdentityClient outboundIdentityClient;
+
+    @NonFinal
+    @Value("${outbound.google.client-id}")
+    protected String CLIENT_ID;
+
+    @NonFinal
+    @Value("${outbound.google.client-secret}")
+    protected String CLIENT_SECRET;
+
+    @NonFinal
+    @Value("${outbound.google.redirect-uri}")
+    protected String REDIRECT_URI;
+
+    @NonFinal
+    protected final String GRANT_TYPE = "authorization_code";
+
 
     @NonFinal
     @Value("${jwt.secret}")
@@ -48,6 +67,41 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     @NonFinal
     @Value("${jwt.expiration}")
     protected Long jwtExpiration; // in minutes
+
+    @Override
+    public AuthenticationResponse outboundAuthenticate(String code) {
+        var respone = outboundIdentityClient.exchangeToken(new ExchangeTokenRequest(
+                CLIENT_ID,
+                CLIENT_SECRET,
+                code,
+                REDIRECT_URI,
+                GRANT_TYPE
+        ));
+
+        log.info("Access token: {}", respone.getAccessToken());
+        var userInfo = outboundUserClient.getUserInfo("json",respone.getAccessToken());
+        log.info("User info: {}", userInfo);
+
+        HashSet<RoleEntity> roles = new HashSet<>();
+        roles.add(RoleEntity.builder().name("USER").description("User role").build());
+
+        var user = userRepository.findByUsername(userInfo.getEmail()).orElseGet(() -> {
+            var newUser = UserEntity.builder()
+                    .username(userInfo.getEmail())
+                    .firstName(userInfo.getGivenName())
+                    .lastName(userInfo.getFamilyName())
+                    .password("") // No password for OAuth2 users
+                    .roles(roles)
+                    .build();
+            return userRepository.save(newUser);
+        });
+        var tokenInfo = generateToken(user);
+        return AuthenticationResponse.builder()
+                .token(tokenInfo.token)
+                .expiryTime(tokenInfo.expiryDate)
+                .build();
+
+    }
 
     @Override
     public IntrospectResponse introspect(IntrospectRequest request) {
