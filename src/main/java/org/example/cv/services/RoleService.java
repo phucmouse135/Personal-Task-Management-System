@@ -1,10 +1,10 @@
 package org.example.cv.services;
 
+import java.util.List;
+
 import org.example.cv.models.requests.RoleRequest;
 import org.example.cv.models.responses.RoleResponse;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
 
 @Service
 public interface RoleService {

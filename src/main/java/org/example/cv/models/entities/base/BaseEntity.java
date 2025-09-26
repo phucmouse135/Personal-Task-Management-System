@@ -1,14 +1,16 @@
 package org.example.cv.models.entities.base;
 
+import java.time.Instant;
 
-import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
 import jakarta.persistence.MappedSuperclass;
-import lombok.*;
+
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
-import java.time.Instant;
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.*;
+
 @MappedSuperclass
 @Getter
 @Setter

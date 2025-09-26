@@ -1,9 +1,9 @@
 package org.example.cv.services.impl;
 
+import java.util.List;
+
 import jakarta.transaction.Transactional;
-import lombok.RequiredArgsConstructor;
-import lombok.experimental.FieldDefaults;
-import lombok.extern.slf4j.Slf4j;
+
 import org.example.cv.models.entities.RoleEntity;
 import org.example.cv.models.requests.RoleRequest;
 import org.example.cv.models.responses.RoleResponse;
@@ -13,7 +13,9 @@ import org.example.cv.utils.mapper.RoleMapper;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor

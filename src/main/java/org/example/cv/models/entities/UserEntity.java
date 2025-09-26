@@ -1,13 +1,15 @@
 package org.example.cv.models.entities;
 
+import java.util.Set;
+
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
+
+import org.example.cv.models.entities.base.BaseEntity;
+
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
-import org.example.cv.models.entities.base.BaseEntity;
-import io.swagger.v3.oas.annotations.media.Schema;
-
-import java.util.Set;
 
 @Getter
 @Setter
@@ -20,10 +22,7 @@ import java.util.Set;
 @Schema(name = "UserEntity", description = "Entity representing a user")
 @NamedEntityGraph(
         name = "UserEntity.roles",
-        attributeNodes = {
-                @NamedAttributeNode("roles")
-        }
-)
+        attributeNodes = {@NamedAttributeNode("roles")})
 public class UserEntity extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -60,5 +59,4 @@ public class UserEntity extends BaseEntity {
 
     @ManyToMany(fetch = FetchType.LAZY)
     Set<RoleEntity> roles;
-
 }

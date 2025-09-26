@@ -1,11 +1,7 @@
 package org.example.cv.controllers;
 
-import com.nimbusds.jose.JOSEException;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.AccessLevel;
-import lombok.RequiredArgsConstructor;
-import lombok.experimental.FieldDefaults;
+import java.text.ParseException;
+
 import org.example.cv.models.requests.AuthenticationRequest;
 import org.example.cv.models.requests.IntrospectRequest;
 import org.example.cv.models.requests.LogoutRequest;
@@ -14,12 +10,16 @@ import org.example.cv.models.responses.ApiResponse;
 import org.example.cv.models.responses.AuthenticationResponse;
 import org.example.cv.models.responses.IntrospectResponse;
 import org.example.cv.services.AuthenticationService;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.oauth2.core.user.OAuth2User;
+import org.springframework.web.bind.annotation.*;
 
-import java.text.ParseException;
+import com.nimbusds.jose.JOSEException;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
 
 @RestController
 @RequestMapping("/auth")
@@ -86,4 +86,22 @@ public class AuthenticationController {
         return ApiResponse.<AuthenticationResponse>builder().result(result).build();
     }
 
+    /**
+     * Endpoint to authenticate a user via an external provider using an authorization code.
+     */
+    @Operation(
+            summary = "Outbound Authenticate",
+            description = "Authenticate a user via an external provider using an authorization code")
+    @PostMapping("/outbound/authenticate")
+    public ApiResponse<AuthenticationResponse> outboundAuthenticate(@RequestBody OAuth2User oAuth2User) {
+        var result = authenticationService.outboundAuthenticate(oAuth2User);
+        return ApiResponse.<AuthenticationResponse>builder().result(result).build();
+    }
+
+    @GetMapping("/login/oauth2/code/google")
+    public String handleGoogleCallback(@RequestParam("code") String code,
+                                       @RequestParam("state") String state) {
+        // Đây là authorization code Google trả về
+        return "Authorization Code: " + code;
+    }
 }

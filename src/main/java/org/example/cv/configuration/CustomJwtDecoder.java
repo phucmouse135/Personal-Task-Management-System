@@ -1,6 +1,8 @@
 package org.example.cv.configuration;
 
-import com.nimbusds.jose.JOSEException;
+import java.util.Objects;
+import javax.crypto.spec.SecretKeySpec;
+
 import org.example.cv.models.requests.IntrospectRequest;
 import org.example.cv.services.AuthenticationService;
 import org.springframework.beans.factory.annotation.Value;
@@ -12,15 +14,12 @@ import org.springframework.security.oauth2.jwt.JwtException;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.stereotype.Component;
 
-import javax.crypto.spec.SecretKeySpec;
-import java.util.Objects;
-
 @Component
 public class CustomJwtDecoder implements JwtDecoder {
     @Value("${jwt.secret}")
     private String jwtSecret;
 
-    private  final AuthenticationService authenticationService;
+    private final AuthenticationService authenticationService;
     private NimbusJwtDecoder jwtDecoder = null;
 
     public CustomJwtDecoder(AuthenticationService authenticationService) {
@@ -34,14 +33,15 @@ public class CustomJwtDecoder implements JwtDecoder {
             if (!response.isValid()) {
                 throw new JwtException("Invalid JWT token");
             }
-        }
-        catch (ParseException e) {
+        } catch (ParseException e) {
             throw new JwtException(e.getMessage());
         }
 
-        if(Objects.isNull(jwtDecoder)){
-            SecretKeySpec  spec = new SecretKeySpec(jwtSecret.getBytes() , "HS512");
-            jwtDecoder = NimbusJwtDecoder.withSecretKey(spec).macAlgorithm(MacAlgorithm.HS512).build();
+        if (Objects.isNull(jwtDecoder)) {
+            SecretKeySpec spec = new SecretKeySpec(jwtSecret.getBytes(), "HS256");
+            jwtDecoder = NimbusJwtDecoder.withSecretKey(spec)
+                    .macAlgorithm(MacAlgorithm.HS512)
+                    .build();
         }
         return jwtDecoder.decode(token);
     }
