@@ -11,13 +11,13 @@
     <artifactId>springboot-flyway-app</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>Spring Boot Flyway App</name>
-    <description>Spring Boot 3.5.7 + Java 17 + Flyway + JPA</description>
+    <description>Spring Boot 3.4.3 + Java 17 + Flyway + JPA</description>
 
     <!-- Parent Spring Boot -->
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.5.6</version>
+        <version>3.4.3</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
 
@@ -192,6 +192,19 @@
                         </path>
                     </annotationProcessorPaths>
                 </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <version>3.2.0</version> <!-- hoặc cùng version với spring-boot-dependencies -->
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>repackage</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
 
         </plugins>
