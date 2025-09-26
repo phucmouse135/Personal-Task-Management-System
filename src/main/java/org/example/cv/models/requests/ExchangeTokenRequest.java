@@ -1,8 +1,8 @@
 package org.example.cv.models.requests;
 
-
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
+
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 

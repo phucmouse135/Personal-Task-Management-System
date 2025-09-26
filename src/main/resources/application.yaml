@@ -21,6 +21,8 @@ spring:
     locations: classpath:db/migration
     baseline-on-migrate: true
     url: ${SPRING_FLYWAY_URL:${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/cvdb}}
+    user: ${SPRING_FLYWAY_USER:${SPRING_DATASOURCE_USERNAME:postgres}}
+    password: ${SPRING_FLYWAY_PASSWORD:${SPRING_DATASOURCE_PASSWORD:123456}}
   security:
     user:
       name: ${SPRING_SECURITY_USER_NAME:admin}
@@ -34,12 +36,14 @@ spring:
                 scope:
                 - email
                 - profile
+                redirect-uri: ${GOOGLE_REDIRECT_URI:http://localhost:8080/login/oauth2/code/google}
         provider:
             google:
+                issuer-uri: https://accounts.google.com
                 authorization-uri: https://accounts.google.com/o/oauth2/auth
                 token-uri: https://oauth2.googleapis.com/token
                 user-info-uri: https://www.googleapis.com/oauth2/v3/userinfo
-                user-name-attribute: sub
+                user-name-attribute: email
 springdoc:
   swagger-ui:
     path: /swagger-ui.html
@@ -56,4 +60,6 @@ outbound:
   google:
     client-id: ${GOOGLE_CLIENT_ID:101718001419-32m56mclhudonq2bg6ljknblod4rtsmn.apps.googleusercontent.com}
     client-secret: ${GOOGLE_CLIENT_SECRET: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}
-    redirect-uri: ${GOOGLE_REDIRECT_URI:http://localhost:8080/oauth2/code/google}
+    redirect-uri: ${GOOGLE_REDIRECT_URI:http://localhost:8080/login/oauth2/code/google}
+server:
+  port: ${SERVER_PORT:8080}

@@ -10,5 +10,4 @@ public interface RoleMapper {
     RoleEntity toEntity(RoleRequest request);
 
     RoleResponse toResponse(RoleEntity role);
-
 }

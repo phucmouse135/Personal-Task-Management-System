@@ -1,9 +1,11 @@
 package org.example.cv.services.impl;
 
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 import jakarta.transaction.Transactional;
-import lombok.RequiredArgsConstructor;
-import lombok.experimental.FieldDefaults;
-import lombok.extern.slf4j.Slf4j;
+
 import org.example.cv.exceptions.AppException;
 import org.example.cv.exceptions.ErrorCode;
 import org.example.cv.models.entities.RoleEntity;
@@ -21,9 +23,9 @@ import org.springframework.data.domain.Sort;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
@@ -34,18 +36,20 @@ public class UserServiceImpl implements UserService {
     UserMapper userMapper;
     RoleRepository roleRepository;
     PasswordEncoder passwordEncoder;
+
     @Override
     @Transactional
     public UserResponse createUser(UserRequest userRequest) {
         log.info("Creating user: {}", userRequest.getUsername());
-        if(userRepository.existsByUsername(userRequest.getUsername())){
+        if (userRepository.existsByUsername(userRequest.getUsername())) {
             throw new AppException(ErrorCode.USER_EXISTED);
         }
         UserEntity user = userMapper.toEntity(userRequest);
         user.setPassword(passwordEncoder.encode(userRequest.getPassword()));
         HashSet<RoleEntity> roles = new HashSet<>();
-        for(Long roleId : userRequest.getRoleIds()){
-            RoleEntity role = roleRepository.findById(roleId).orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_EXISTED));
+        for (Long roleId : userRequest.getRoleIds()) {
+            RoleEntity role =
+                    roleRepository.findById(roleId).orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_EXISTED));
             roles.add(role);
         }
         user.setRoles(roles);
@@ -74,12 +78,13 @@ public class UserServiceImpl implements UserService {
         log.info("Updating user by id: {}", id);
         UserEntity user = userRepository.findById(id).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
         userMapper.updateEntityFromRequest(userRequest, user);
-        if(userRequest.getPassword() != null && !userRequest.getPassword().isEmpty()){
+        if (userRequest.getPassword() != null && !userRequest.getPassword().isEmpty()) {
             user.setPassword(passwordEncoder.encode(userRequest.getPassword()));
         }
         Set<RoleEntity> roles = new HashSet<>();
-        for(Long roleId : userRequest.getRoleIds()){
-            RoleEntity role = roleRepository.findById(roleId).orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_EXISTED));
+        for (Long roleId : userRequest.getRoleIds()) {
+            RoleEntity role =
+                    roleRepository.findById(roleId).orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_EXISTED));
             roles.add(role);
         }
         user.setRoles(roles);
@@ -99,8 +104,10 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public UserResponse assignRoleToUser(Long userId, Long roleId) {
         log.info("Assigning role {} to user {}", roleId, userId);
-        UserEntity user = userRepository.findById(userId).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
-        RoleEntity role = roleRepository.findById(roleId).orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_EXISTED));
+        UserEntity user =
+                userRepository.findById(userId).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+        RoleEntity role =
+                roleRepository.findById(roleId).orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_EXISTED));
         user.getRoles().add(role);
         user = userRepository.save(user);
         log.info("Assigned role {} to user {}", roleId, userId);
@@ -111,8 +118,10 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public UserResponse removeRoleFromUser(Long userId, Long roleId) {
         log.info("Removing role {} from user {}", roleId, userId);
-        UserEntity user = userRepository.findById(userId).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
-        RoleEntity role = roleRepository.findById(roleId).orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_EXISTED));
+        UserEntity user =
+                userRepository.findById(userId).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+        RoleEntity role =
+                roleRepository.findById(roleId).orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_EXISTED));
         user.getRoles().remove(role);
         user = userRepository.save(user);
         log.info("Removed role {} from user {}", roleId, userId);

@@ -5,11 +5,10 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.openfeign.EnableFeignClients;
 
 @SpringBootApplication
-@EnableFeignClients
+@EnableFeignClients(basePackages = "org.example.cv.repositories.httpclient")
 public class CvApplication {
 
     public static void main(String[] args) {
         SpringApplication.run(CvApplication.class, args);
     }
-
 }

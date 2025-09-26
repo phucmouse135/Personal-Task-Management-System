@@ -1,14 +1,13 @@
 package org.example.cv.services.impl;
 
-import com.nimbusds.jose.*;
-import com.nimbusds.jose.crypto.MACSigner;
-import com.nimbusds.jose.crypto.MACVerifier;
-import com.nimbusds.jwt.JWTClaimsSet;
-import com.nimbusds.jwt.SignedJWT;
-import lombok.RequiredArgsConstructor;
-import lombok.experimental.FieldDefaults;
-import lombok.experimental.NonFinal;
-import lombok.extern.slf4j.Slf4j;
+import java.text.ParseException;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.StringJoiner;
+import java.util.UUID;
+
 import org.example.cv.exceptions.AppException;
 import org.example.cv.exceptions.ErrorCode;
 import org.example.cv.models.entities.InvalidatedToken;
@@ -23,16 +22,22 @@ import org.example.cv.repositories.httpclient.OutboundIdentityClient;
 import org.example.cv.repositories.httpclient.OutboundUserClient;
 import org.example.cv.services.AuthenticationService;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
-import java.text.ParseException;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.StringJoiner;
-import java.util.UUID;
+import com.nimbusds.jose.*;
+import com.nimbusds.jose.crypto.MACSigner;
+import com.nimbusds.jose.crypto.MACVerifier;
+import com.nimbusds.jwt.JWTClaimsSet;
+import com.nimbusds.jwt.SignedJWT;
+
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
+import lombok.experimental.NonFinal;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
@@ -59,7 +64,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     @NonFinal
     protected final String GRANT_TYPE = "authorization_code";
 
-
     @NonFinal
     @Value("${jwt.secret}")
     protected String secret;
@@ -69,38 +73,33 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     protected Long jwtExpiration; // in minutes
 
     @Override
-    public AuthenticationResponse outboundAuthenticate(String code) {
-        var respone = outboundIdentityClient.exchangeToken(new ExchangeTokenRequest(
-                CLIENT_ID,
-                CLIENT_SECRET,
-                code,
-                REDIRECT_URI,
-                GRANT_TYPE
-        ));
-
-        log.info("Access token: {}", respone.getAccessToken());
-        var userInfo = outboundUserClient.getUserInfo("json",respone.getAccessToken());
+    public AuthenticationResponse outboundAuthenticate(OAuth2User oAuth2User) {
+        PasswordEncoder passwordEncoder = new BCryptPasswordEncoder(10);
+        var userInfo = oAuth2User.getAttributes();
         log.info("User info: {}", userInfo);
 
-        HashSet<RoleEntity> roles = new HashSet<>();
-        roles.add(RoleEntity.builder().name("USER").description("User role").build());
 
-        var user = userRepository.findByUsername(userInfo.getEmail()).orElseGet(() -> {
+
+        var user = userRepository.findByUsername((String) userInfo.get("email")).orElseGet(() -> {
+            log.info("User not found, creating new user");
+            HashSet<RoleEntity> roles = new HashSet<>();
+            roles.add(RoleEntity.builder().name("USER").build());
             var newUser = UserEntity.builder()
-                    .username(userInfo.getEmail())
-                    .firstName(userInfo.getGivenName())
-                    .lastName(userInfo.getFamilyName())
-                    .password("") // No password for OAuth2 users
+                    .username((String) userInfo.get("email"))
+                    .password(passwordEncoder.encode("passwordDefault")) // No password for OAuth2 users
                     .roles(roles)
+                    .email((String) userInfo.get("email"))
                     .build();
-            return userRepository.save(newUser);
+            var savedUser = userRepository.save(newUser);
+            log.info("Created new user: {}", savedUser.getId());
+
+            return savedUser;
         });
         var tokenInfo = generateToken(user);
         return AuthenticationResponse.builder()
                 .token(tokenInfo.token)
                 .expiryTime(tokenInfo.expiryDate)
                 .build();
-
     }
 
     @Override
@@ -118,11 +117,13 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     @Override
     public AuthenticationResponse authenticate(AuthenticationRequest request) {
+        PasswordEncoder passwordEncoder = new BCryptPasswordEncoder(10);
         log.info("Authenticating user: {}", request.getUsername());
-        UserEntity user = userRepository.findByUsername(request.getUsername())
+        UserEntity user = userRepository
+                .findByUsername(request.getUsername())
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
-        if (!user.getPassword().equals(request.getPassword()))
-            throw new AppException(ErrorCode.UNAUTHENTICATED);
+        boolean authenticated = passwordEncoder.matches(request.getPassword(), user.getPassword());
+        if (!authenticated) throw new AppException(ErrorCode.UNAUTHENTICATED);
 
         TokenInfo tokenInfo = generateToken(user);
         return new AuthenticationResponse(tokenInfo.token, tokenInfo.expiryDate);
@@ -147,7 +148,8 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         var signedJWT = verifyToken(request.getToken());
 
         String jit = signedJWT.getJWTClaimsSet().getJWTID();
-        UserEntity user = userRepository.findByUsername(signedJWT.getJWTClaimsSet().getSubject())
+        UserEntity user = userRepository
+                .findByUsername(signedJWT.getJWTClaimsSet().getSubject())
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
         Date expiryTime = signedJWT.getJWTClaimsSet().getExpirationTime();
 
@@ -160,8 +162,8 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         return new AuthenticationResponse(tokenInfo.token, tokenInfo.expiryDate);
     }
 
-    private TokenInfo  generateToken(UserEntity user) {
-        JWSHeader jwsHeader = new JWSHeader(JWSAlgorithm.HS512);
+    private TokenInfo generateToken(UserEntity user) {
+        JWSHeader jwsHeader = new JWSHeader(JWSAlgorithm.HS256);
 
         Date issueTime = new Date();
         Date expiryTime = new Date(Instant.ofEpochMilli(issueTime.getTime())
@@ -207,7 +209,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     private String buildScope(UserEntity user) {
         StringJoiner scope = new StringJoiner(" ");
-        if(!CollectionUtils.isEmpty(user.getRoles())){
+        if (!CollectionUtils.isEmpty(user.getRoles())) {
             user.getRoles().forEach(role -> scope.add("ROLE_" + role.getName()));
         }
         return scope.toString();

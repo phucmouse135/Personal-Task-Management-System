@@ -1,18 +1,19 @@
 package org.example.cv.controllers;
 
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.AccessLevel;
-import lombok.RequiredArgsConstructor;
-import lombok.experimental.FieldDefaults;
-import lombok.extern.slf4j.Slf4j;
+import java.util.List;
+
 import org.example.cv.models.requests.RoleRequest;
 import org.example.cv.models.responses.ApiResponse;
 import org.example.cv.models.responses.RoleResponse;
 import org.example.cv.services.RoleService;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
+import lombok.extern.slf4j.Slf4j;
 
 @RestController
 @RequestMapping("/roles")
@@ -39,7 +40,7 @@ public class RoleController {
         return ApiResponse.<RoleResponse>builder().result(roleResponse).build();
     }
 
-    //List<RoleResponse> getAllRoles();
+    // List<RoleResponse> getAllRoles();
     /**
      * Retrieve all roles
      * @return
