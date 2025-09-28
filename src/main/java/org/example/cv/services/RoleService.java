@@ -12,5 +12,5 @@ public interface RoleService {
 
     List<RoleResponse> getAllRoles();
 
-    void softdeleteRole(Long id);
+    void softdeleteRole(String id);
 }

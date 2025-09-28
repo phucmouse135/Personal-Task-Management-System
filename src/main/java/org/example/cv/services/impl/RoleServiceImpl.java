@@ -58,7 +58,7 @@ public class RoleServiceImpl implements RoleService {
     @Override
     @Transactional
     @PreAuthorize("hasRole('ADMIN')")
-    public void softdeleteRole(Long id) {
+    public void softdeleteRole(String id) {
         log.info("Soft deleting role by id: {}", id);
         roleRepository.softDeleteByIds(List.of(id));
     }

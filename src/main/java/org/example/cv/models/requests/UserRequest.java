@@ -63,5 +63,5 @@ public class UserRequest {
     String email;
 
     @Schema(description = "Set of role IDs associated with the user", example = "[1, 2, 3]")
-    Set<Long> roleIds;
+    Set<String> roleIds;
 }

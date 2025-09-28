@@ -1,4 +1,3 @@
 package org.example.cv.service;
 
-public class RoleServiceTest {
-}
+public class RoleServiceTest {}

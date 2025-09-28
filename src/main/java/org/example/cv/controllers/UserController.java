@@ -1,6 +1,7 @@
 package org.example.cv.controllers;
 
 import jakarta.validation.Valid;
+
 import org.example.cv.models.requests.UserRequest;
 import org.example.cv.models.responses.ApiResponse;
 import org.example.cv.models.responses.UserResponse;
@@ -91,7 +92,8 @@ public class UserController {
     @Operation(summary = "Update user details", description = "Updates the details of an existing user")
     @Parameter(name = "id", description = "ID of the user to update", required = true)
     @PutMapping("/{id}")
-    public ApiResponse<UserResponse> updateUser(@PathVariable("id") Long id, @RequestBody @Valid UserRequest userRequest) {
+    public ApiResponse<UserResponse> updateUser(
+            @PathVariable("id") Long id, @RequestBody @Valid UserRequest userRequest) {
         log.info("Received request to update user: {}", id);
         UserResponse userResponse = userService.updateUser(id, userRequest);
         log.info("User updated successfully: {}", userResponse.getUsername());
@@ -123,7 +125,7 @@ public class UserController {
     @Operation(summary = "Assign role to user", description = "Assigns a role to a user")
     @PostMapping("/{userId}/roles/{roleId}")
     public ApiResponse<UserResponse> assignRoleToUser(
-            @PathVariable("userId") Long userId, @PathVariable("roleId") Long roleId) {
+            @PathVariable("userId") Long userId, @PathVariable("roleId") String roleId) {
         log.info("Received request to assign role: {} to user: {}", roleId, userId);
         UserResponse userResponse = userService.assignRoleToUser(userId, roleId);
         log.info("Role assigned successfully to user: {}", userResponse.getUsername());
@@ -138,7 +140,7 @@ public class UserController {
     @Operation(summary = "Remove role from user", description = "Removes a role from a user")
     @DeleteMapping("/{userId}/roles/{roleId}")
     public ApiResponse<UserResponse> removeRoleFromUser(
-            @PathVariable("userId") Long userId, @PathVariable("roleId") Long roleId) {
+            @PathVariable("userId") Long userId, @PathVariable("roleId") String roleId) {
         log.info("Received request to remove role: {} from user: {}", roleId, userId);
         UserResponse userResponse = userService.removeRoleFromUser(userId, roleId);
         log.info("Role removed successfully from user: {}", userResponse.getUsername());

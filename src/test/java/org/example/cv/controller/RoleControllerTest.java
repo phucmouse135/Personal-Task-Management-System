@@ -1,6 +1,14 @@
 package org.example.cv.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.times;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import java.util.List;
+
 import org.example.cv.controllers.RoleController;
 import org.example.cv.models.requests.RoleRequest;
 import org.example.cv.models.responses.RoleResponse;
@@ -16,14 +24,7 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-import java.util.List;
-
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
-import static org.mockito.Mockito.times;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @ExtendWith(MockitoExtension.class)
 @TestPropertySource("./test.properties")
@@ -40,7 +41,7 @@ class RoleControllerTest {
     private ObjectMapper objectMapper;
 
     @BeforeEach
-    void setUp(){
+    void setUp() {
         mockMvc = MockMvcBuilders.standaloneSetup(roleController).build();
         objectMapper = new ObjectMapper();
     }
@@ -80,9 +81,8 @@ class RoleControllerTest {
     @Test
     void testSoftDeleteRole() throws Exception {
         // Act & Assert
-        mockMvc.perform(delete("/roles/1"))
-                .andExpect(status().isOk());
+        mockMvc.perform(delete("/roles/1")).andExpect(status().isOk());
 
-        verify(roleService, times(1)).softdeleteRole(1L);
+        verify(roleService, times(1)).softdeleteRole("USER");
     }
 }

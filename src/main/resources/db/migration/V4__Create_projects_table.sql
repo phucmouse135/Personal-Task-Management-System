@@ -1,5 +1,5 @@
 CREATE TABLE projects (
-    id integer PRIMARY KEY,
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY, -- Unique identifier for each project
     name VARCHAR(100) NOT NULL,
     description TEXT,
     owner_id integer REFERENCES users(id),

@@ -1,10 +1,13 @@
 package org.example.cv.models.entities;
 
-import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
+
+import org.example.cv.models.entities.base.BaseEntity;
+
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
-import org.example.cv.models.entities.base.BaseEntity;
+import org.example.cv.utils.userSecurity.Ownable;
 
 @Entity
 @Table(name = "projects")
@@ -14,7 +17,8 @@ import org.example.cv.models.entities.base.BaseEntity;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Schema(name = "ProjectEntity", description = "Entity representing a project")
-public class ProjectEntity extends BaseEntity {
+@NamedEntityGraph(name = "ProjectEntity.owner", attributeNodes = @NamedAttributeNode("owner"))
+public class ProjectEntity extends BaseEntity implements Ownable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -30,7 +34,7 @@ public class ProjectEntity extends BaseEntity {
     String description;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "owner_id", insertable = false, updatable = false)
+    @JoinColumn(name = "owner_id")
     @Schema(description = "Owner of the project")
     UserEntity owner;
 }

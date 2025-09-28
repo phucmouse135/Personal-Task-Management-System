@@ -30,7 +30,10 @@ public class ApplicationInitConfig {
     static final String ADMIN_PASSWORD = "admin";
 
     @Bean
-    @ConditionalOnProperty(prefix = "spring", value = "datasource.driver-class-name", havingValue = "org.postgresql.Driver")
+    @ConditionalOnProperty(
+            prefix = "spring",
+            value = "datasource.driver-class-name",
+            havingValue = "org.postgresql.Driver")
     ApplicationRunner applicationRunner(UserRepository userRepository, RoleRepository roleRepository) {
         log.info("Initializing application.....");
         return args -> {
@@ -49,7 +52,7 @@ public class ApplicationInitConfig {
                 roles.add(adminRole);
                 userRepository.save(UserEntity.builder()
                         .username(ADMIN_USER_NAME)
-                                .email("phucchuot37@gmail.com")
+                        .email("phucchuot37@gmail.com")
                         .password(passwordEncoder.encode(ADMIN_PASSWORD))
                         .roles(roles)
                         .build());

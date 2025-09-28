@@ -84,8 +84,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         var userInfo = oAuth2User.getAttributes();
         log.info("User info: {}", userInfo);
 
-
-
         var user = userRepository.findByUsername((String) userInfo.get("email")).orElseGet(() -> {
             log.info("User not found, creating new user");
             HashSet<RoleEntity> roles = new HashSet<>();

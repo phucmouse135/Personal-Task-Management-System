@@ -10,6 +10,7 @@ import org.example.cv.models.entities.base.BaseEntity;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import org.example.cv.utils.userSecurity.Ownable;
 
 @Getter
 @Setter
@@ -23,7 +24,7 @@ import lombok.experimental.FieldDefaults;
 @NamedEntityGraph(
         name = "UserEntity.roles",
         attributeNodes = {@NamedAttributeNode("roles")})
-public class UserEntity extends BaseEntity {
+public class UserEntity extends BaseEntity implements Ownable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Schema(description = "Unique identifier of the user", example = "1")
@@ -58,5 +59,13 @@ public class UserEntity extends BaseEntity {
     String email;
 
     @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(name = "users_roles",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "role_name"))
     Set<RoleEntity> roles;
+
+    @Override
+    public UserEntity getOwner() {
+        return this;
+    }
 }

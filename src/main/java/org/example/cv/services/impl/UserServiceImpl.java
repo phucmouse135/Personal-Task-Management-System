@@ -20,8 +20,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.access.prepost.PostAuthorize;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.parameters.P;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -55,7 +55,7 @@ public class UserServiceImpl implements UserService {
         UserEntity user = userMapper.toEntity(userRequest);
         user.setPassword(passwordEncoder.encode(userRequest.getPassword()));
         HashSet<RoleEntity> roles = new HashSet<>();
-        for (Long roleId : userRequest.getRoleIds()) {
+        for (String roleId : userRequest.getRoleIds()) {
             RoleEntity role =
                     roleRepository.findById(roleId).orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_EXISTED));
             roles.add(role);
@@ -73,7 +73,7 @@ public class UserServiceImpl implements UserService {
      * @return
      */
     @Override
-    @PreAuthorize("hasRole('ADMIN') or #id == principal.id")
+    @PostAuthorize("hasRole('ADMIN') or returnObject.username == authentication.name")
     public UserResponse getUserById(Long id) {
         log.info("Getting user by id: {}", id);
         UserEntity user = userRepository.findById(id).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
@@ -107,7 +107,7 @@ public class UserServiceImpl implements UserService {
      */
     @Override
     @Transactional
-    @PreAuthorize("hasRole('ADMIN') or #id == principal.id")
+    @PostAuthorize("hasRole('ADMIN') or returnObject.username == authentication.name")
     public UserResponse updateUser(Long id, UserRequest userRequest) {
         log.info("Updating user by id: {}", id);
         UserEntity user = userRepository.findById(id).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
@@ -116,7 +116,7 @@ public class UserServiceImpl implements UserService {
             user.setPassword(passwordEncoder.encode(userRequest.getPassword()));
         }
         Set<RoleEntity> roles = new HashSet<>();
-        for (Long roleId : userRequest.getRoleIds()) {
+        for (String roleId : userRequest.getRoleIds()) {
             RoleEntity role =
                     roleRepository.findById(roleId).orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_EXISTED));
             roles.add(role);
@@ -134,7 +134,7 @@ public class UserServiceImpl implements UserService {
      */
     @Override
     @Transactional
-    @PreAuthorize("hasRole('ADMIN') or #id == principal.id")
+    @PreAuthorize("hasRole('ADMIN') or @ownershipSecurity.isOwner(authentication, #id)")
     public void softdeleteUser(Long id) {
         log.info("Soft deleting user by id: {}", id);
         userRepository.softDeleteByIds(List.of(id));
@@ -150,7 +150,7 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     @PreAuthorize("hasRole('ADMIN')")
-    public UserResponse assignRoleToUser(Long userId, Long roleId) {
+    public UserResponse assignRoleToUser(Long userId, String roleId) {
         log.info("Assigning role {} to user {}", roleId, userId);
         UserEntity user =
                 userRepository.findById(userId).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
@@ -172,7 +172,7 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     @PreAuthorize("hasRole('ADMIN')")
-    public UserResponse removeRoleFromUser(Long userId, Long roleId) {
+    public UserResponse removeRoleFromUser(Long userId, String roleId) {
         log.info("Removing role {} from user {}", roleId, userId);
         UserEntity user =
                 userRepository.findById(userId).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
@@ -191,7 +191,7 @@ public class UserServiceImpl implements UserService {
      */
     @Override
     @Transactional
-    @PreAuthorize("hasRole('ADMIN') or #id == principal.id")
+    @PreAuthorize("hasRole('ADMIN') or @ownershipSecurity.isOwner(authentication, #id)")
     public void restoreUser(Long id) {
         log.info("Restoring user by id: {}", id);
         userRepository.restoreById(id);

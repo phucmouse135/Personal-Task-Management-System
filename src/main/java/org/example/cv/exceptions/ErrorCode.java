@@ -16,7 +16,10 @@ public enum ErrorCode {
     UNAUTHENTICATED(1006, "Unauthenticated", HttpStatus.UNAUTHORIZED),
     UNAUTHORIZED(1007, "You do not have permission", HttpStatus.FORBIDDEN),
     INVALID_DOB(1008, "Your age must be at least {min}", HttpStatus.BAD_REQUEST),
-    ROLE_NOT_EXISTED(1009, "Role not existed", HttpStatus.NOT_FOUND);
+    ROLE_NOT_EXISTED(1009, "Role not existed", HttpStatus.NOT_FOUND),
+    ENTITY_NOT_OWNABLE(1011, "Entity is not ownable", HttpStatus.INTERNAL_SERVER_ERROR),
+    REPOSITORY_NOT_FOUND(1020, "Repository not found for the given entity", HttpStatus.INTERNAL_SERVER_ERROR),
+    PROJECT_NOT_EXISTED(1010, "Project not existed", HttpStatus.NOT_FOUND);
 
     ErrorCode(int code, String message, HttpStatusCode statusCode) {
         this.code = code;

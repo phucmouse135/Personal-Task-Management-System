@@ -3,6 +3,7 @@ package org.example.cv.controllers;
 import java.text.ParseException;
 
 import jakarta.validation.Valid;
+
 import org.example.cv.models.requests.AuthenticationRequest;
 import org.example.cv.models.requests.IntrospectRequest;
 import org.example.cv.models.requests.LogoutRequest;
@@ -108,8 +109,7 @@ public class AuthenticationController {
      */
     @Operation(summary = "Handle Google OAuth2 Callback", description = "Handle the OAuth2 callback from Google")
     @GetMapping("/login/oauth2/code/google")
-    public String handleGoogleCallback(@RequestParam("code") String code,
-                                       @RequestParam("state") String state) {
+    public String handleGoogleCallback(@RequestParam("code") String code, @RequestParam("state") String state) {
         // Đây là authorization code Google trả về
         return "Authorization Code: " + code;
     }

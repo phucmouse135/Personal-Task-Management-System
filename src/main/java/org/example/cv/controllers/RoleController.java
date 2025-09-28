@@ -3,6 +3,7 @@ package org.example.cv.controllers;
 import java.util.List;
 
 import jakarta.validation.Valid;
+
 import org.example.cv.models.requests.RoleRequest;
 import org.example.cv.models.responses.ApiResponse;
 import org.example.cv.models.responses.RoleResponse;
@@ -62,7 +63,7 @@ public class RoleController {
      */
     @Operation(summary = "Soft delete a role", description = "Soft deletes a role by its ID.")
     @DeleteMapping("/{id}")
-    public ApiResponse<Void> softdeleteRole(@PathVariable Long id) {
+    public ApiResponse<Void> softdeleteRole(@PathVariable String id) {
         log.info("Received request to soft delete role with ID: {}", id);
         roleService.softdeleteRole(id);
         log.info("Role with ID: {} has been soft deleted", id);

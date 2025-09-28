@@ -17,9 +17,9 @@ public interface UserService {
 
     void softdeleteUser(Long id);
 
-    UserResponse assignRoleToUser(Long userId, Long roleId);
+    UserResponse assignRoleToUser(Long userId, String roleId);
 
-    UserResponse removeRoleFromUser(Long userId, Long roleId);
+    UserResponse removeRoleFromUser(Long userId, String roleId);
 
     void restoreUser(Long id);
 }

@@ -1,10 +1,10 @@
 package org.example.cv.models.responses;
 
+import java.time.Instant;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
-
-import java.time.Instant;
 
 @Data
 @NoArgsConstructor
@@ -24,7 +24,7 @@ public class ProjectResponse {
     String description;
 
     @Schema(description = "Owner ID of the project", example = "1")
-    Long ownerId;
+    UserResponse owner;
 
     @Schema(description = "Timestamp when the project was created", example = "2023-10-01T12:00:00Z")
     Instant createdAt;

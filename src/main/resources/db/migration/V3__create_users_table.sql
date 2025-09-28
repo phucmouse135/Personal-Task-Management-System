@@ -2,7 +2,7 @@
 -- Description: Create the users table
 
 CREATE TABLE IF NOT EXISTS users (
-                                     id SERIAL PRIMARY KEY, -- Unique identifier of the user
+                                     id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY , -- Unique identifier of the user
                                      username VARCHAR(50) NOT NULL UNIQUE, -- Unique username of the user
     password VARCHAR(100) NOT NULL, -- Password of the user
     first_name VARCHAR(100), -- First name of the user

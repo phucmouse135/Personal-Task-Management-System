@@ -40,7 +40,7 @@ public class CustomJwtDecoder implements JwtDecoder {
         if (Objects.isNull(jwtDecoder)) {
             SecretKeySpec spec = new SecretKeySpec(jwtSecret.getBytes(), "HS256");
             jwtDecoder = NimbusJwtDecoder.withSecretKey(spec)
-                    .macAlgorithm(MacAlgorithm.HS512)
+                    .macAlgorithm(MacAlgorithm.HS256)
                     .build();
         }
         return jwtDecoder.decode(token);
