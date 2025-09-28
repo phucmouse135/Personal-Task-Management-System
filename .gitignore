@@ -35,4 +35,4 @@ build/
 application-*.yml
 application-*.properties
 
-./docker/data
+docker/data/
