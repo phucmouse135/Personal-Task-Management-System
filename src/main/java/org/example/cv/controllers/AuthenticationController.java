@@ -2,6 +2,7 @@ package org.example.cv.controllers;
 
 import java.text.ParseException;
 
+import jakarta.validation.Valid;
 import org.example.cv.models.requests.AuthenticationRequest;
 import org.example.cv.models.requests.IntrospectRequest;
 import org.example.cv.models.requests.LogoutRequest;
@@ -37,7 +38,7 @@ public class AuthenticationController {
      */
     @Operation(summary = "Introspect Token", description = "Check the validity of a given token")
     @PostMapping(value = "/introspect")
-    ApiResponse<IntrospectResponse> introspectResponseApiResponse(@RequestBody IntrospectRequest request) {
+    ApiResponse<IntrospectResponse> introspectResponseApiResponse(@RequestBody @Valid IntrospectRequest request) {
         var result = authenticationService.introspect(request);
         return ApiResponse.<IntrospectResponse>builder().result(result).build();
     }
@@ -52,7 +53,7 @@ public class AuthenticationController {
      */
     @Operation(summary = "Refresh Token", description = "Refresh an existing authentication token")
     @PostMapping("/refresh")
-    ApiResponse<AuthenticationResponse> authenticate(@RequestBody RefreshRequest request)
+    ApiResponse<AuthenticationResponse> authenticate(@RequestBody @Valid RefreshRequest request)
             throws ParseException, JOSEException {
         var result = authenticationService.refreshToken(request);
         return ApiResponse.<AuthenticationResponse>builder().result(result).build();
@@ -68,7 +69,7 @@ public class AuthenticationController {
      */
     @Operation(summary = "Logout", description = "Log out a user by invalidating their token")
     @PostMapping("/logout")
-    ApiResponse<Void> logout(@RequestBody LogoutRequest request) throws ParseException, JOSEException {
+    ApiResponse<Void> logout(@RequestBody @Valid LogoutRequest request) throws ParseException, JOSEException {
         authenticationService.logout(request);
         return ApiResponse.<Void>builder().build();
     }
@@ -81,7 +82,7 @@ public class AuthenticationController {
      */
     @Operation(summary = "Authenticate", description = "Authenticate a user and generate an authentication token")
     @PostMapping(value = "/token", consumes = "application/json", produces = "application/json")
-    ApiResponse<AuthenticationResponse> authenticate(@RequestBody AuthenticationRequest request) {
+    ApiResponse<AuthenticationResponse> authenticate(@RequestBody @Valid AuthenticationRequest request) {
         var result = authenticationService.authenticate(request);
         return ApiResponse.<AuthenticationResponse>builder().result(result).build();
     }
@@ -93,11 +94,19 @@ public class AuthenticationController {
             summary = "Outbound Authenticate",
             description = "Authenticate a user via an external provider using an authorization code")
     @PostMapping("/outbound/authenticate")
-    public ApiResponse<AuthenticationResponse> outboundAuthenticate(@RequestBody OAuth2User oAuth2User) {
+    public ApiResponse<AuthenticationResponse> outboundAuthenticate(@RequestBody @Valid OAuth2User oAuth2User) {
         var result = authenticationService.outboundAuthenticate(oAuth2User);
         return ApiResponse.<AuthenticationResponse>builder().result(result).build();
     }
 
+    /**
+     * Handle OAuth2 callback from Google
+     *
+     * @param code  the authorization code returned by Google
+     * @param state the state parameter to prevent CSRF attacks
+     * @return a response indicating the result of the authentication
+     */
+    @Operation(summary = "Handle Google OAuth2 Callback", description = "Handle the OAuth2 callback from Google")
     @GetMapping("/login/oauth2/code/google")
     public String handleGoogleCallback(@RequestParam("code") String code,
                                        @RequestParam("state") String state) {

@@ -72,6 +72,12 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     @Value("${jwt.expiration}")
     protected Long jwtExpiration; // in minutes
 
+    /**
+     * Authenticate user with OAuth2
+     * If user not exist, create new user
+     * @param oAuth2User
+     * @return
+     */
     @Override
     public AuthenticationResponse outboundAuthenticate(OAuth2User oAuth2User) {
         PasswordEncoder passwordEncoder = new BCryptPasswordEncoder(10);
@@ -102,6 +108,11 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .build();
     }
 
+    /**
+     * Introspect token
+     * @param request
+     * @return
+     */
     @Override
     public IntrospectResponse introspect(IntrospectRequest request) {
         var token = request.getToken();
@@ -115,6 +126,11 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         return new IntrospectResponse(isValid);
     }
 
+    /**
+     * Authenticate user with username and password
+     * @param request
+     * @return
+     */
     @Override
     public AuthenticationResponse authenticate(AuthenticationRequest request) {
         PasswordEncoder passwordEncoder = new BCryptPasswordEncoder(10);
@@ -129,6 +145,10 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         return new AuthenticationResponse(tokenInfo.token, tokenInfo.expiryDate);
     }
 
+    /**
+     * Logout user by invalidating token
+     * @param request
+     */
     @Override
     public void logout(LogoutRequest request) throws ParseException, JOSEException {
         var signToken = verifyToken(request.getToken());
@@ -142,6 +162,11 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         invalidedTokenRepository.save(invalidatedToken);
     }
 
+    /**
+     * Refresh token
+     * @param request
+     * @return
+     */
     @Override
     public AuthenticationResponse refreshToken(RefreshRequest request) throws ParseException, JOSEException {
         log.info("Refreshing token");
@@ -162,6 +187,11 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         return new AuthenticationResponse(tokenInfo.token, tokenInfo.expiryDate);
     }
 
+    /**
+     * Generate JWT token
+     * @param user
+     * @return
+     */
     private TokenInfo generateToken(UserEntity user) {
         JWSHeader jwsHeader = new JWSHeader(JWSAlgorithm.HS256);
 
@@ -193,6 +223,13 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         }
     }
 
+    /**
+     * Verify JWT token
+     * @param token
+     * @return
+     * @throws JOSEException
+     * @throws java.text.ParseException
+     */
     private SignedJWT verifyToken(String token) throws JOSEException, java.text.ParseException {
         JWSVerifier verifier = new MACVerifier(secret.getBytes());
         SignedJWT signedJWT = SignedJWT.parse(token);
@@ -207,6 +244,11 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         return signedJWT;
     }
 
+    /**
+     * Build scope string from user roles
+     * @param user
+     * @return
+     */
     private String buildScope(UserEntity user) {
         StringJoiner scope = new StringJoiner(" ");
         if (!CollectionUtils.isEmpty(user.getRoles())) {
@@ -215,5 +257,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         return scope.toString();
     }
 
+    // Record to hold token and expiry date
     private record TokenInfo(String token, Date expiryDate) {}
 }

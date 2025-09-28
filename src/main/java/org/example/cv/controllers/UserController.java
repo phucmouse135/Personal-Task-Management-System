@@ -1,5 +1,6 @@
 package org.example.cv.controllers;
 
+import jakarta.validation.Valid;
 import org.example.cv.models.requests.UserRequest;
 import org.example.cv.models.responses.ApiResponse;
 import org.example.cv.models.responses.UserResponse;
@@ -33,7 +34,7 @@ public class UserController {
      */
     @Operation(summary = "Create a new user", description = "Creates a new user with the provided details")
     @PostMapping("/create")
-    public ApiResponse<UserResponse> createUser(@RequestBody UserRequest userRequest) {
+    public ApiResponse<UserResponse> createUser(@RequestBody @Valid UserRequest userRequest) {
         log.info("Received request to create user: {}", userRequest.getUsername());
         UserResponse userResponse = userService.createUser(userRequest);
         log.info("User created successfully: {}", userResponse.getId());
@@ -90,7 +91,7 @@ public class UserController {
     @Operation(summary = "Update user details", description = "Updates the details of an existing user")
     @Parameter(name = "id", description = "ID of the user to update", required = true)
     @PutMapping("/{id}")
-    public ApiResponse<UserResponse> updateUser(@PathVariable("id") Long id, @RequestBody UserRequest userRequest) {
+    public ApiResponse<UserResponse> updateUser(@PathVariable("id") Long id, @RequestBody @Valid UserRequest userRequest) {
         log.info("Received request to update user: {}", id);
         UserResponse userResponse = userService.updateUser(id, userRequest);
         log.info("User updated successfully: {}", userResponse.getUsername());

@@ -2,6 +2,7 @@ package org.example.cv.controllers;
 
 import java.util.List;
 
+import jakarta.validation.Valid;
 import org.example.cv.models.requests.RoleRequest;
 import org.example.cv.models.responses.ApiResponse;
 import org.example.cv.models.responses.RoleResponse;
@@ -33,7 +34,7 @@ public class RoleController {
      */
     @Operation(summary = "Create a new role", description = "Creates a new role with the provided details.")
     @PostMapping
-    public ApiResponse<RoleResponse> createRole(@RequestBody RoleRequest request) {
+    public ApiResponse<RoleResponse> createRole(@RequestBody @Valid RoleRequest request) {
         log.info("Received request to create role: {}", request);
         RoleResponse roleResponse = roleService.createRole(request);
         log.info("Role created successfully: {}", roleResponse);

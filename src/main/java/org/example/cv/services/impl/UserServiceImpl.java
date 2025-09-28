@@ -39,6 +39,12 @@ public class UserServiceImpl implements UserService {
     RoleRepository roleRepository;
     PasswordEncoder passwordEncoder;
 
+    /**
+     * Create user
+     *
+     * @param userRequest
+     * @return
+     */
     @Override
     @Transactional
     public UserResponse createUser(UserRequest userRequest) {
@@ -60,6 +66,12 @@ public class UserServiceImpl implements UserService {
         return userMapper.toResponse(user);
     }
 
+    /**
+     * Get user by id
+     *
+     * @param id
+     * @return
+     */
     @Override
     @PreAuthorize("hasRole('ADMIN') or #id == principal.id")
     public UserResponse getUserById(Long id) {
@@ -68,6 +80,16 @@ public class UserServiceImpl implements UserService {
         return userMapper.toResponse(user);
     }
 
+    /**
+     * Get all users with pagination and search
+     *
+     * @param page
+     * @param size
+     * @param search
+     * @param sort
+     * @param direction
+     * @return
+     */
     @Override
     @PreAuthorize("hasRole('ADMIN')")
     public Page<UserResponse> getAllUsers(int page, int size, String search, String sort, String direction) {
@@ -76,6 +98,13 @@ public class UserServiceImpl implements UserService {
         return userRepository.findAllByPaginationAndSearch(search, pageable).map(userMapper::toResponse);
     }
 
+    /**
+     * Update user
+     *
+     * @param id
+     * @param userRequest
+     * @return
+     */
     @Override
     @Transactional
     @PreAuthorize("hasRole('ADMIN') or #id == principal.id")
@@ -98,6 +127,11 @@ public class UserServiceImpl implements UserService {
         return userMapper.toResponse(user);
     }
 
+    /**
+     * Soft delete user by id
+     *
+     * @param id
+     */
     @Override
     @Transactional
     @PreAuthorize("hasRole('ADMIN') or #id == principal.id")
@@ -106,6 +140,13 @@ public class UserServiceImpl implements UserService {
         userRepository.softDeleteByIds(List.of(id));
     }
 
+    /**
+     * Assign role to user
+     *
+     * @param userId
+     * @param roleId
+     * @return
+     */
     @Override
     @Transactional
     @PreAuthorize("hasRole('ADMIN')")
@@ -121,6 +162,13 @@ public class UserServiceImpl implements UserService {
         return userMapper.toResponse(user);
     }
 
+    /**
+     * Remove role from user
+     *
+     * @param userId
+     * @param roleId
+     * @return
+     */
     @Override
     @Transactional
     @PreAuthorize("hasRole('ADMIN')")
@@ -136,6 +184,11 @@ public class UserServiceImpl implements UserService {
         return userMapper.toResponse(user);
     }
 
+    /**
+     * Restore user by id
+     *
+     * @param id
+     */
     @Override
     @Transactional
     @PreAuthorize("hasRole('ADMIN') or #id == principal.id")
