@@ -63,3 +63,14 @@ outbound:
     redirect-uri: ${GOOGLE_REDIRECT_URI:http://localhost:8080/login/oauth2/code/google}
 server:
   port: ${SERVER_PORT:8080}
+
+cache:
+  redis:
+    host: ${REDIS_HOST:localhost}
+    port: ${REDIS_PORT:6379}
+    ttl:
+      default: ${REDIS_TTL:600} # Time to live in seconds
+      project-details: ${REDIS_PROJECT_DETAILS_TTL:300} # Time to live for project details in seconds
+  caffeine:
+    ttl: ${CAFFEINE_TTL:600} # Time to live in seconds
+    maximum-size: ${CAFFEINE_MAXIMUM_SIZE:1000} # Maximum size of the cache

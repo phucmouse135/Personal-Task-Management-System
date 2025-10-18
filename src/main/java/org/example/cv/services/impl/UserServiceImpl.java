@@ -16,6 +16,9 @@ import org.example.cv.repositories.RoleRepository;
 import org.example.cv.repositories.UserRepository;
 import org.example.cv.services.UserService;
 import org.example.cv.utils.mapper.UserMapper;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -73,6 +76,7 @@ public class UserServiceImpl implements UserService {
      * @return
      */
     @Override
+    @Cacheable(value = "users", key = "#id", cacheManager = "caffeineCacheManager")
     @PostAuthorize("hasRole('ADMIN') or returnObject.username == authentication.name")
     public UserResponse getUserById(Long id) {
         log.info("Getting user by id: {}", id);
@@ -107,6 +111,7 @@ public class UserServiceImpl implements UserService {
      */
     @Override
     @Transactional
+    @CachePut(value = "users", key = "#id", cacheManager = "caffeineCacheManager")
     @PostAuthorize("hasRole('ADMIN') or returnObject.username == authentication.name")
     public UserResponse updateUser(Long id, UserRequest userRequest) {
         log.info("Updating user by id: {}", id);
@@ -134,6 +139,7 @@ public class UserServiceImpl implements UserService {
      */
     @Override
     @Transactional
+    @CacheEvict(value = "users", key = "#id", cacheManager = "caffeineCacheManager")
     @PreAuthorize("hasRole('ADMIN') or @ownershipSecurity.isOwner(authentication, #id)")
     public void softdeleteUser(Long id) {
         log.info("Soft deleting user by id: {}", id);
