@@ -3,11 +3,11 @@ package org.example.cv.models.entities;
 import jakarta.persistence.*;
 
 import org.example.cv.models.entities.base.BaseEntity;
+import org.example.cv.utils.userSecurity.Ownable;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
-import org.example.cv.utils.userSecurity.Ownable;
 
 @Entity
 @Table(name = "projects")

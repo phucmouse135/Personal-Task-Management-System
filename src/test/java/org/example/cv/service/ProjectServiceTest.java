@@ -1,5 +1,12 @@
 package org.example.cv.service;
 
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
+
+import java.util.Collections;
+import java.util.Optional;
+
 import org.example.cv.exceptions.AppException;
 import org.example.cv.exceptions.ErrorCode;
 import org.example.cv.models.entities.ProjectEntity;
@@ -20,13 +27,6 @@ import org.springframework.data.domain.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
-
-import java.util.Collections;
-import java.util.Optional;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class ProjectServiceTest {
@@ -257,7 +257,8 @@ class ProjectServiceTest {
         // Arrange
         Pageable pageable = PageRequest.of(0, 10, Sort.by(Sort.Direction.ASC, "name"));
         Page<ProjectEntity> projectPage = new PageImpl<>(Collections.singletonList(project));
-        when(projectRepository.findAllByOwnerId(any(Pageable.class), anyString(), eq(1L))).thenReturn(projectPage);
+        when(projectRepository.findAllByOwnerId(any(Pageable.class), anyString(), eq(1L)))
+                .thenReturn(projectPage);
         when(projectMapper.toResponse(any(ProjectEntity.class))).thenReturn(projectResponse);
 
         // Act

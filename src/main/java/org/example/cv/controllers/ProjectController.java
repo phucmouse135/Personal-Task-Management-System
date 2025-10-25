@@ -1,6 +1,5 @@
 package org.example.cv.controllers;
 
-import jakarta.validation.Path;
 import jakarta.validation.Valid;
 
 import org.example.cv.models.requests.ProjectRequest;
@@ -109,8 +108,7 @@ public class ProjectController {
     @Operation(summary = "Update an existing project")
     @PutMapping("/{id}")
     public ApiResponse<ProjectResponse> update(
-            @PathVariable("id") Long id,
-            @RequestBody @Valid @Validated(OnUpdate.class) ProjectRequest request) {
+            @PathVariable("id") Long id, @RequestBody @Valid @Validated(OnUpdate.class) ProjectRequest request) {
         log.info("Request to update project: id={}, {}", id, request);
         ProjectResponse project = projectService.update(id, request);
         return ApiResponse.<ProjectResponse>builder()

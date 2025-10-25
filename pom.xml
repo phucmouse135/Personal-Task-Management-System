@@ -40,6 +40,8 @@
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
 
+
+
         <!-- Spring Data JPA -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -199,6 +201,13 @@
             <artifactId>spring-boot-starter-aop</artifactId>
         </dependency>
 
+<!--        com.fasterxml.jackson.datatype:jackson-datatype-jsr310-->
+        <!-- https://mvnrepository.com/artifact/com.fasterxml.jackson.datatype/jackson-datatype-jsr310 -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.datatype</groupId>
+            <artifactId>jackson-datatype-jsr310</artifactId>
+<!--            <version>2.20.0</version>-->
+        </dependency>
 
 
 

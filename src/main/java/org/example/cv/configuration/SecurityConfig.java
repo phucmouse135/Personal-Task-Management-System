@@ -29,7 +29,6 @@ public class SecurityConfig {
     private final CustomJwtDecoder customJwtDecoder;
     private final CustomOauth2SuccessHandle customOauth2SuccessHandle;
 
-
     public SecurityConfig(CustomJwtDecoder customJwtDecoder, CustomOauth2SuccessHandle customOauth2SuccessHandle) {
         this.customJwtDecoder = customJwtDecoder;
         this.customOauth2SuccessHandle = customOauth2SuccessHandle;

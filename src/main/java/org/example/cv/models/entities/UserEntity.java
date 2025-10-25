@@ -6,12 +6,13 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 
 import org.example.cv.models.entities.base.BaseEntity;
+import org.example.cv.utils.userSecurity.Ownable;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
-import org.example.cv.utils.userSecurity.Ownable;
 
+@EqualsAndHashCode(callSuper = false)
 @Getter
 @Setter
 @Builder
@@ -59,7 +60,8 @@ public class UserEntity extends BaseEntity implements Ownable {
     String email;
 
     @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(name = "users_roles",
+    @JoinTable(
+            name = "users_roles",
             joinColumns = @JoinColumn(name = "user_id"),
             inverseJoinColumns = @JoinColumn(name = "role_name"))
     Set<RoleEntity> roles;

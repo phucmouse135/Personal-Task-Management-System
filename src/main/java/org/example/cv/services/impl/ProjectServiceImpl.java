@@ -48,7 +48,10 @@ public class ProjectServiceImpl implements ProjectService {
      * @return
      */
     @PreAuthorize("hasRole('ADMIN')")
-    @Cacheable(value = "projectsList", key = "'all_'+#page+'_'+#size+'_'+#sortBy+'_'+#sortDir+'_'+#filter" , cacheManager = "redisCacheManager")
+    @Cacheable(
+            value = "project-list",
+            key = "'all_'+#page+'_'+#size+'_'+#sortBy+'_'+#sortDir+'_'+#filter",
+            cacheManager = "redisCacheManager")
     @Override
     public Page<ProjectResponse> getAll(int page, int size, String sortBy, String sortDir, String filter) {
         log.info("Getting all projects");
@@ -62,7 +65,7 @@ public class ProjectServiceImpl implements ProjectService {
      * @return
      */
     @Override
-    @Cacheable(value = "projectDetail", key = "'project_'+#id", cacheManager = "compositeCacheManager")
+    @Cacheable(value = "project-detail", key = "'project_'+#id", cacheManager = "compositeCacheManager")
     @PostAuthorize("hasRole('ADMIN') or returnObject.owner.username == authentication.name")
     public ProjectResponse getById(Long id) {
         log.info("Getting project by id: {}", id);
@@ -79,7 +82,10 @@ public class ProjectServiceImpl implements ProjectService {
      */
     @Transactional
     @Override
-    @CacheEvict(value = {"projectList"}, allEntries = true, cacheManager = "redisCacheManager")
+    @CacheEvict(
+            value = {"project-list"},
+            allEntries = true,
+            cacheManager = "redisCacheManager")
     public ProjectResponse create(ProjectRequest request) {
         log.info("Creating project: {}", request.getName());
         UserEntity owner = userRepository
@@ -100,12 +106,20 @@ public class ProjectServiceImpl implements ProjectService {
      */
     @Transactional
     @Override
-    @CachePut(value = "projectDetail", key = "'project_' +#id", cacheManager = "compositeCacheManager")
-    @CacheEvict(value = {"projectList"}, allEntries = true, cacheManager = "redisCacheManager")
+    @CachePut(value = "project-detail", key = "'project_' +#id", cacheManager = "compositeCacheManager")
+    @CacheEvict(
+            value = {"project-list"},
+            allEntries = true,
+            cacheManager = "redisCacheManager")
     @PostAuthorize("hasRole('ADMIN') or returnObject.owner.username == authentication.name")
     public ProjectResponse update(Long id, ProjectRequest request) {
         log.info("Updating project: {}", id);
-        log.info("Current user: {}", SecurityContextHolder.getContext().getAuthentication().getPrincipal().toString());
+        log.info(
+                "Current user: {}",
+                SecurityContextHolder.getContext()
+                        .getAuthentication()
+                        .getPrincipal()
+                        .toString());
         UserEntity owner = userRepository
                 .findById(request.getOwnerId())
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
@@ -121,8 +135,13 @@ public class ProjectServiceImpl implements ProjectService {
      */
     @Override
     @Transactional
-    @CacheEvict(value = "projectDetail",key = "'project_' +#id", allEntries = true , cacheManager = "compositeCacheManager")
-    @PreAuthorize("hasRole('ADMIN') or @ownershipSecurity.isOwner(T(org.example.cv.models.entities.ProjectEntity), authentication, #id)")
+    @CacheEvict(
+            value = "project-detail",
+            key = "'project_' +#id",
+            allEntries = true,
+            cacheManager = "compositeCacheManager")
+    @PreAuthorize(
+            "hasRole('ADMIN') or @ownershipSecurity.isOwner(T(org.example.cv.models.entities.ProjectEntity), authentication, #id)")
     public void softdelete(Long id) {
         log.info("Deleting project: {}", id);
         var project = projectRepository.findById(id).orElseThrow(() -> new AppException(ErrorCode.PROJECT_NOT_EXISTED));
@@ -136,8 +155,13 @@ public class ProjectServiceImpl implements ProjectService {
      */
     @Override
     @Transactional
-    @CacheEvict(value = "projectDetail",key = "'project_' +#id", allEntries = true , cacheManager = "compositeCacheManager")
-    @PreAuthorize("hasRole('ADMIN') or @ownershipSecurity.isOwner(T(org.example.cv.models.entities.ProjectEntity), authentication, #id)")
+    @CacheEvict(
+            value = "project-detail",
+            key = "'project_' +#id",
+            allEntries = true,
+            cacheManager = "compositeCacheManager")
+    @PreAuthorize(
+            "hasRole('ADMIN') or @ownershipSecurity.isOwner(T(org.example.cv.models.entities.ProjectEntity), authentication, #id)")
     public void restore(Long id) {
         log.info("Restoring project: {}", id);
         var project = projectRepository.findById(id).orElseThrow(() -> new AppException(ErrorCode.PROJECT_NOT_EXISTED));

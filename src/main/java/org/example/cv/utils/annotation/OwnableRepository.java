@@ -1,8 +1,8 @@
 package org.example.cv.utils.annotation;
 
-import org.example.cv.utils.userSecurity.Ownable;
-
 import java.lang.annotation.*;
+
+import org.example.cv.utils.userSecurity.Ownable;
 
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
