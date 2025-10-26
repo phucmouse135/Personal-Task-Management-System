@@ -91,7 +91,6 @@ public class TaskServiceImpl implements TaskService {
     public TaskResponse createTask(CreateTaskRequest request) {
         // TODO: Cần kiểm tra xem user hiện tại có quyền tạo task trong project này không
         // (ví dụ: là thành viên của project)
-
         log.info("Creating task {}", request);
         ProjectEntity project = projectRepository
                 .findById(request.projectId())
@@ -99,6 +98,10 @@ public class TaskServiceImpl implements TaskService {
         UserEntity assignee = userRepository
                 .findById(request.assigneeId())
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+
+        if(!project.getMembers().contains(assignee)) {
+            throw new AppException(ErrorCode.USER_NOT_PROJECT_MEMBER);
+        }
 
         TaskEntity task = taskMapper.toEntity(request);
         task.setProject(project);

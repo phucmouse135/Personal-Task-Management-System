@@ -17,7 +17,12 @@ import lombok.experimental.FieldDefaults;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Schema(name = "ProjectEntity", description = "Entity representing a project")
-@NamedEntityGraph(name = "ProjectEntity.owner", attributeNodes = @NamedAttributeNode("owner"))
+@NamedEntityGraph(name = "ProjectEntity.owner",
+        attributeNodes = {
+                @NamedAttributeNode("owner"),
+                @NamedAttributeNode("members")
+        }
+)
 public class ProjectEntity extends BaseEntity implements Ownable {
 
     @Id
@@ -37,4 +42,14 @@ public class ProjectEntity extends BaseEntity implements Ownable {
     @JoinColumn(name = "owner_id")
     @Schema(description = "Owner of the project")
     UserEntity owner;
+
+    // project members
+    @ManyToMany
+    @JoinTable(
+        name = "project_members",
+        joinColumns = @JoinColumn(name = "project_id"),
+        inverseJoinColumns = @JoinColumn(name = "user_id")
+    )
+    @Schema(description = "Members of the project")
+    java.util.Set<UserEntity> members;
 }

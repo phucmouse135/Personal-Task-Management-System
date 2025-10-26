@@ -19,6 +19,7 @@ public enum ErrorCode {
     ROLE_NOT_EXISTED(1009, "Role not existed", HttpStatus.NOT_FOUND),
     ENTITY_NOT_OWNABLE(1011, "Entity is not ownable", HttpStatus.INTERNAL_SERVER_ERROR),
     TASK_NOT_EXISTED(1012, "Task not existed", HttpStatus.NOT_FOUND),
+    USER_NOT_PROJECT_MEMBER(1014, "User is not a member of the project", HttpStatus.BAD_REQUEST),
     INVALID_TASK_STATUS_TRANSITION(1013, "Invalid task status transition from {from} to {to}", HttpStatus.BAD_REQUEST),
     REPOSITORY_NOT_FOUND(1020, "Repository not found for the given entity", HttpStatus.INTERNAL_SERVER_ERROR),
     PROJECT_NOT_EXISTED(1010, "Project not existed", HttpStatus.NOT_FOUND);
