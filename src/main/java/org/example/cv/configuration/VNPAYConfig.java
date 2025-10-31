@@ -1,4 +1,4 @@
 package org.example.cv.configuration;
 
-public class CustomUserDetail {
+public class VNPAYConfig {
 }
