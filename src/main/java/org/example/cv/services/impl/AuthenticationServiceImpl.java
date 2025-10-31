@@ -8,6 +8,8 @@ import java.util.HashSet;
 import java.util.StringJoiner;
 import java.util.UUID;
 
+import jakarta.mail.MessagingException;
+
 import org.example.cv.exceptions.AppException;
 import org.example.cv.exceptions.ErrorCode;
 import org.example.cv.models.entities.InvalidatedToken;
@@ -21,7 +23,11 @@ import org.example.cv.repositories.UserRepository;
 import org.example.cv.repositories.httpclient.OutboundIdentityClient;
 import org.example.cv.repositories.httpclient.OutboundUserClient;
 import org.example.cv.services.AuthenticationService;
+import org.example.cv.services.EmailService;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.user.OAuth2User;
@@ -48,6 +54,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     InvalidedTokenRepository invalidedTokenRepository;
     OutboundUserClient outboundUserClient;
     OutboundIdentityClient outboundIdentityClient;
+    EmailService emailService;
 
     @NonFinal
     @Value("${outbound.google.client-id}")
@@ -88,15 +95,25 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             log.info("User not found, creating new user");
             HashSet<RoleEntity> roles = new HashSet<>();
             roles.add(RoleEntity.builder().name("USER").build());
+            String password = UUID.randomUUID().toString();
             var newUser = UserEntity.builder()
                     .username((String) userInfo.get("email"))
-                    .password(passwordEncoder.encode("passwordDefault")) // No password for OAuth2 users
+                    .password(passwordEncoder.encode(password)) // No password for OAuth2 users
                     .roles(roles)
                     .email((String) userInfo.get("email"))
                     .build();
             var savedUser = userRepository.save(newUser);
+            try {
+                emailService.sendHtmlMessage(
+                        userInfo.get("email").toString(),
+                        "Welcome to Our Service",
+                        "<h1>Welcome to Our Service</h1>" + "<p>Your account has been created successfully.</p>"
+                                + "<p>Your temporary password is: <strong>"
+                                + password + "</strong></p>" + "<p>Please change your password after logging in.</p>");
+            } catch (MessagingException e) {
+                throw new AppException(ErrorCode.EMAIL_SENDING_FAILED);
+            }
             log.info("Created new user: {}", savedUser.getId());
-
             return savedUser;
         });
         var tokenInfo = generateToken(user);
@@ -138,7 +155,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
         boolean authenticated = passwordEncoder.matches(request.getPassword(), user.getPassword());
         if (!authenticated) throw new AppException(ErrorCode.UNAUTHENTICATED);
-
         TokenInfo tokenInfo = generateToken(user);
         return new AuthenticationResponse(tokenInfo.token, tokenInfo.expiryDate);
     }

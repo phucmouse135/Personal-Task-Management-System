@@ -23,4 +23,8 @@ public interface ProjectRepository extends BaseRepository<ProjectEntity, Long> {
             + "LOWER(p.description) LIKE LOWER(CONCAT('%', :filter, '%'))) AND "
             + "p.owner.id = :ownerId")
     Page<ProjectEntity> findAllByOwnerId(Pageable pageable, String filter, Long ownerId);
+
+    // findById with owner fetch
+    @EntityGraph(attributePaths = {"owner", "members"})
+    java.util.Optional<ProjectEntity> findById(Long id);
 }

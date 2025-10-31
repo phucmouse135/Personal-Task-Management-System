@@ -5,7 +5,7 @@ import jakarta.validation.Valid;
 import org.example.cv.models.requests.CreateTaskRequest;
 import org.example.cv.models.requests.TaskFilterRequest;
 import org.example.cv.models.requests.UpdateTaskRequest;
-import org.example.cv.models.responses.PagedResponse;
+import org.example.cv.models.responses.PageResponse;
 import org.example.cv.models.responses.TaskResponse;
 import org.example.cv.services.TaskService;
 import org.springdoc.core.annotations.ParameterObject;
@@ -31,10 +31,10 @@ public class TaskController {
     @Operation(summary = "Lấy danh sách task (có lọc, sắp xếp, phân trang)")
     @ApiResponse(responseCode = "200", description = "Thành công")
     @GetMapping
-    public ResponseEntity<PagedResponse<TaskResponse>> getAllTasks(
+    public ResponseEntity<PageResponse<TaskResponse>> getAllTasks(
             @ParameterObject @Valid TaskFilterRequest filter,
             @ParameterObject @PageableDefault(size = 20, sort = "deadline") Pageable pageable) {
-        PagedResponse<TaskResponse> response = taskService.getAllTasks(filter, pageable);
+        PageResponse<TaskResponse> response = taskService.getAllTasks(filter, pageable);
         return ResponseEntity.ok(response);
     }
 

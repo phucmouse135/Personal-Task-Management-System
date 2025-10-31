@@ -1,16 +1,19 @@
 package org.example.cv.service;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.*;
+
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Set;
-import org.example.cv.constants.TaskPriority; // Import enum từ package của bạn
-import org.example.cv.constants.TaskStatus; // Import enum từ package của bạn
+
+import org.example.cv.constants.TaskPriority;
+import org.example.cv.constants.TaskStatus;
 import org.example.cv.models.entities.ProjectEntity;
 import org.example.cv.models.entities.TaskEntity;
 import org.example.cv.models.entities.UserEntity;
-
 import org.example.cv.models.requests.TaskFilterRequest;
-import org.example.cv.models.responses.PagedResponse;
+import org.example.cv.models.responses.PageResponse;
 import org.example.cv.models.responses.TaskResponse;
 import org.example.cv.repositories.ProjectRepository;
 import org.example.cv.repositories.TaskRepository;
@@ -21,12 +24,11 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
 @ActiveProfiles("test") // Sử dụng profile test (application-test.yml, thường dùng H2)
@@ -46,6 +48,9 @@ class TaskServiceIntegrationTest {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private ApplicationEventPublisher eventPublisher;
 
     // === CẬP NHẬT ===
     // Sử dụng đúng kiểu Entity
@@ -89,10 +94,7 @@ class TaskServiceIntegrationTest {
                 .build();
         project1 = projectRepository.save(project1);
 
-        project2 = ProjectEntity.builder()
-                .name("Project B")
-                .owner(user2)
-                .build();
+        project2 = ProjectEntity.builder().name("Project B").owner(user2).build();
         project2 = projectRepository.save(project2);
 
         // 3. Tạo Tasks
@@ -102,7 +104,7 @@ class TaskServiceIntegrationTest {
                 .status(TaskStatus.TODO)
                 .priority(TaskPriority.MEDIUM)
                 .project(project1)
-                .assignee(user1)
+                .assignees((Set<UserEntity>) user1)
                 .deadline(now.plus(Duration.ofDays(5))) // Cung cấp deadline (NOT NULL)
                 .build());
 
@@ -111,7 +113,7 @@ class TaskServiceIntegrationTest {
                 .status(TaskStatus.IN_PROGRESS)
                 .priority(TaskPriority.HIGH)
                 .project(project1)
-                .assignee(user2)
+                .assignees((Set<UserEntity>) user2)
                 .deadline(now.plus(Duration.ofDays(2)))
                 .build());
 
@@ -120,7 +122,7 @@ class TaskServiceIntegrationTest {
                 .status(TaskStatus.DONE)
                 .priority(TaskPriority.LOW)
                 .project(project2)
-                .assignee(user1)
+                .assignees((Set<UserEntity>) user1)
                 .deadline(now.minus(Duration.ofDays(1))) // Task đã trễ hạn
                 .build());
     }
@@ -134,7 +136,7 @@ class TaskServiceIntegrationTest {
         Pageable pageable = PageRequest.of(0, 10);
 
         // Act
-        PagedResponse<TaskResponse> response = taskService.getAllTasks(filter, pageable);
+        PageResponse<TaskResponse> response = taskService.getAllTasks(filter, pageable);
 
         // Assert
         // Logic test không đổi, vì chúng ta assert trên DTO Response
@@ -150,12 +152,13 @@ class TaskServiceIntegrationTest {
                 null,
                 user1.getId(),
                 Set.of(TaskStatus.TODO, TaskStatus.DONE), // Lấy task TODO và DONE của user1
-                null, null, null
-        );
+                null,
+                null,
+                null);
         Pageable pageable = PageRequest.of(0, 10);
 
         // Act
-        PagedResponse<TaskResponse> response = taskService.getAllTasks(filter, pageable);
+        PageResponse<TaskResponse> response = taskService.getAllTasks(filter, pageable);
 
         // Assert
         assertThat(response.totalElements()).isEqualTo(2);
@@ -168,17 +171,18 @@ class TaskServiceIntegrationTest {
         // Arrange
         TaskFilterRequest filter = new TaskFilterRequest(
                 project2.getId(), // Project B (chỉ có Task 3)
-                user2.getId(),    // Assignee là user2 (không có task nào trong Project B)
-                null, null, null, null
-        );
+                user2.getId(), // Assignee là user2 (không có task nào trong Project B)
+                null,
+                null,
+                null,
+                null);
         Pageable pageable = PageRequest.of(0, 10);
 
         // Act
-        PagedResponse<TaskResponse> response = taskService.getAllTasks(filter, pageable);
+        PageResponse<TaskResponse> response = taskService.getAllTasks(filter, pageable);
 
         // Assert
         assertThat(response.totalElements()).isEqualTo(0);
         assertThat(response.content()).isEmpty();
     }
 }
-

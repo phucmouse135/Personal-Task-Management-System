@@ -1,4 +1,9 @@
 package org.example.cv.services;
 
-public class EmailService {
+import jakarta.mail.MessagingException;
+
+public interface EmailService {
+    void sendSimpleMessage(String to, String subject, String text);
+
+    void sendHtmlMessage(String to, String subject, String htmlContent) throws MessagingException;
 }

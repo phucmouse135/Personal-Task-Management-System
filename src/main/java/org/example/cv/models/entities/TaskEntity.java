@@ -1,6 +1,7 @@
 package org.example.cv.models.entities;
 
 import java.time.Instant;
+import java.util.Set;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
@@ -8,11 +9,14 @@ import jakarta.validation.constraints.Size;
 
 import org.example.cv.constants.TaskPriority;
 import org.example.cv.constants.TaskStatus;
+import org.example.cv.event.AuditLogListener;
+import org.example.cv.event.Auditable;
 import org.example.cv.models.entities.base.BaseEntity;
 
 import lombok.*;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-@EqualsAndHashCode(callSuper = false)
+@EqualsAndHashCode(callSuper = true)
 @Entity
 @Table(name = "tasks")
 @Data
@@ -21,8 +25,9 @@ import lombok.*;
 @NoArgsConstructor
 @NamedEntityGraph(
         name = "TaskEntity.projectAssignee",
-        attributeNodes = {@NamedAttributeNode("project"), @NamedAttributeNode("assignee")})
-public class TaskEntity extends BaseEntity {
+        attributeNodes = {@NamedAttributeNode("project"), @NamedAttributeNode("assignees")})
+@EntityListeners(AuditLogListener.class)
+public class TaskEntity extends BaseEntity implements Auditable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -51,7 +56,15 @@ public class TaskEntity extends BaseEntity {
     @JoinColumn(name = "project_id", nullable = false)
     private ProjectEntity project;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "assignee_id")
-    private UserEntity assignee;
+    @ManyToMany
+    @JoinTable(
+            name = "task_assignees",
+            joinColumns = @JoinColumn(name = "task_id"),
+            inverseJoinColumns = @JoinColumn(name = "user_id"))
+    private Set<UserEntity> assignees;
+
+    @Override
+    public String getEntityType() {
+        return "TASK";
+    }
 }

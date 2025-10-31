@@ -15,7 +15,7 @@ import feign.Param;
 public interface TaskRepository extends BaseRepository<TaskEntity, Long> {
     @Query("SELECT t FROM TaskEntity t " + "LEFT JOIN FETCH t.project p "
             + "LEFT JOIN FETCH p.owner "
-            + "LEFT JOIN FETCH t.assignee "
+            + "LEFT JOIN FETCH t.assignees "
             + "WHERE t.id = :id")
     Optional<TaskEntity> findTaskWithDetailsById(@Param("id") Long id);
 

@@ -1,11 +1,13 @@
 package org.example.cv.services.impl;
 
 import java.util.Collections;
+import java.util.HashSet;
 
 import jakarta.transaction.Transactional;
 
 import org.example.cv.exceptions.AppException;
 import org.example.cv.exceptions.ErrorCode;
+import org.example.cv.models.entities.ProjectEntity;
 import org.example.cv.models.entities.UserEntity;
 import org.example.cv.models.requests.ProjectRequest;
 import org.example.cv.models.responses.ProjectResponse;
@@ -69,10 +71,9 @@ public class ProjectServiceImpl implements ProjectService {
     @PostAuthorize("hasRole('ADMIN') or returnObject.owner.username == authentication.name")
     public ProjectResponse getById(Long id) {
         log.info("Getting project by id: {}", id);
-        return projectRepository
-                .findById(id)
-                .map(projectMapper::toResponse)
-                .orElseThrow(() -> new AppException(ErrorCode.PROJECT_NOT_EXISTED));
+        ProjectEntity project =
+                projectRepository.findById(id).orElseThrow(() -> new AppException(ErrorCode.PROJECT_NOT_EXISTED));
+        return projectMapper.toResponse(project);
     }
 
     /**
@@ -91,9 +92,11 @@ public class ProjectServiceImpl implements ProjectService {
         UserEntity owner = userRepository
                 .findById(request.getOwnerId())
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
-        var project = projectMapper.toEntity(request);
+        ProjectEntity project = projectMapper.toEntity(request);
 
         project.setOwner(owner);
+        HashSet<UserEntity> members = new HashSet<>();
+        project.setMembers(members);
         projectRepository.save(project);
         return projectMapper.toResponse(project);
     }
@@ -186,5 +189,43 @@ public class ProjectServiceImpl implements ProjectService {
         log.info("Getting all projects by owner id: {}", ownerId);
         Pageable pageable = PageRequest.of(page, size).withSort(Sort.by(Sort.Direction.fromString(sortDir), sortBy));
         return projectRepository.findAllByOwnerId(pageable, filter, ownerId).map(projectMapper::toResponse);
+    }
+
+    @Override
+    public ProjectResponse addMember(Long projectId, Long userId) {
+        log.info("Adding member {} to project {}", userId, projectId);
+        ProjectEntity project = projectRepository
+                .findById(projectId)
+                .orElseThrow(() -> new AppException(ErrorCode.PROJECT_NOT_EXISTED));
+        UserEntity user =
+                userRepository.findById(userId).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+        project.getMembers().add(user);
+        projectRepository.save(project);
+        return projectMapper.toResponse(project);
+    }
+
+    @Override
+    public ProjectResponse removeMember(Long projectId, Long userId) {
+        log.info("Removing member {} from project {}", userId, projectId);
+        var project = projectRepository
+                .findById(projectId)
+                .orElseThrow(() -> new AppException(ErrorCode.PROJECT_NOT_EXISTED));
+        var user = userRepository.findById(userId).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+        project.getMembers().remove(user);
+        projectRepository.save(project);
+        return projectMapper.toResponse(project);
+    }
+
+    @Override
+    public ProjectResponse changeOwner(Long projectId, Long newOwnerId) {
+        log.info("Changing owner of project {} to {}", projectId, newOwnerId);
+        var project = projectRepository
+                .findById(projectId)
+                .orElseThrow(() -> new AppException(ErrorCode.PROJECT_NOT_EXISTED));
+        var newOwner =
+                userRepository.findById(newOwnerId).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+        project.setOwner(newOwner);
+        projectRepository.save(project);
+        return projectMapper.toResponse(project);
     }
 }

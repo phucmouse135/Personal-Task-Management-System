@@ -2,6 +2,7 @@
 package org.example.cv.models.requests;
 
 import java.time.Instant;
+import java.util.List;
 
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotBlank;
@@ -22,4 +23,4 @@ public record CreateTaskRequest(
                 @Future(message = "Deadline phải ở tương lai")
                 Instant deadline,
         @Schema(description = "ID của dự án", example = "1") @NotNull Long projectId,
-        @Schema(description = "ID của người được gán", example = "10") @NotNull Long assigneeId) {}
+        @Schema(description = "ID của những người được gán", example = "[ 1,2]") @NotNull List<Long> assignees) {}

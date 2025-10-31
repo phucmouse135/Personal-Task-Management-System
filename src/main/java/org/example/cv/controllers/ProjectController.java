@@ -70,7 +70,7 @@ public class ProjectController {
      */
     @Operation(summary = "Get project by id")
     @GetMapping("/{id}")
-    public ApiResponse<ProjectResponse> getById(@RequestParam(defaultValue = "1") Long id) {
+    public ApiResponse<ProjectResponse> getById(@PathVariable Long id) {
         log.info("Request to get project by id: {}", id);
         ProjectResponse project = projectService.getById(id);
         return ApiResponse.<ProjectResponse>builder()
@@ -186,6 +186,48 @@ public class ProjectController {
                 .code(200)
                 .result(projects)
                 .message("Projects by owner retrieved successfully")
+                .build();
+    }
+
+    // ProjectResponse addMember(Long projectId, Long userId);
+    @Operation(summary = "Add a member to a project")
+    @PostMapping("/{projectId}/members/{userId}")
+    public ApiResponse<ProjectResponse> addMember(
+            @PathVariable("projectId") Long projectId, @PathVariable("userId") Long userId) {
+        log.info("Request to add member {} to project {}", userId, projectId);
+        ProjectResponse project = projectService.addMember(projectId, userId);
+        return ApiResponse.<ProjectResponse>builder()
+                .code(200)
+                .result(project)
+                .message("Member added to project successfully")
+                .build();
+    }
+
+    // ProjectResponse removeMember(Long projectId, Long userId);
+    @Operation(summary = "Remove a member from a project")
+    @DeleteMapping("/{projectId}/members/{userId}")
+    public ApiResponse<ProjectResponse> removeMember(
+            @PathVariable("projectId") Long projectId, @PathVariable("userId") Long userId) {
+        log.info("Request to remove member {} from project {}", userId, projectId);
+        ProjectResponse project = projectService.removeMember(projectId, userId);
+        return ApiResponse.<ProjectResponse>builder()
+                .code(200)
+                .result(project)
+                .message("Member removed from project successfully")
+                .build();
+    }
+
+    // ProjectResponse changeOwner(Long projectId, Long newOwnerId);
+    @Operation(summary = "Change the owner of a project")
+    @PutMapping("/{projectId}/owner/{newOwnerId}")
+    public ApiResponse<ProjectResponse> changeOwner(
+            @PathVariable("projectId") Long projectId, @PathVariable("newOwnerId") Long newOwnerId) {
+        log.info("Request to change owner of project {} to {}", projectId, newOwnerId);
+        ProjectResponse project = projectService.changeOwner(projectId, newOwnerId);
+        return ApiResponse.<ProjectResponse>builder()
+                .code(200)
+                .result(project)
+                .message("Project owner changed successfully")
                 .build();
     }
 }

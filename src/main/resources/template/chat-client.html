@@ -1,10 +1,150 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
+    <title>WebSocket Chat Test</title>
+    <!-- Thư viện SockJS và STOMP -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.1/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; display: flex; }
+        .chat-box { border: 1px solid #ccc; padding: 10px; margin: 10px; width: 400px; }
+        #projectMessages, #privateMessages {
+            height: 300px; overflow-y: scroll; border: 1px solid #eee; margin-bottom: 10px; padding: 5px;
+        }
+        input { width: calc(100% - 80px); }
+        button { width: 70px; }
+    </style>
 </head>
 <body>
-$END$
+
+<div class="chat-box">
+    <h2>Project Chat (ID: <span id="projectId">...</span>)</h2>
+    <div id="projectMessages"></div>
+    <form id="projectForm">
+        <input type="text" id="projectInput" placeholder="Gửi tin đến dự án"/>
+        <button type="submit">Gửi</button>
+    </form>
+</div>
+
+<div class="chat-box">
+    <h2>Private Chat (To ID: <span id="receiverId">...</span>)</h2>
+    <div id="privateMessages"></div>
+    <form id="privateForm">
+        <input type="text" id="privateInput" placeholder="Gửi tin riêng"/>
+        <button type="submit">Gửi</button>
+    </form>
+</div>
+
+<script>
+    // --- CẤU HÌNH ---
+    const API_BASE_URL = "http://localhost:8080";
+    const AUTH_TOKEN = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhZG1pbiIsInNjb3BlIjoiUk9MRV9BRE1JTiIsImlzcyI6ImV4YW1wbGUuY29tIiwiZXhwIjoxNzYxOTM0NDc3LCJpYXQiOjE3NjE5MzA4NzcsInVzZXJJZCI6MSwianRpIjoiMWU3Mzg4OTYtYjU2NS00ODg0LTk3ZDgtNmNhNmUyMzAyYzBkIn0.z01EyzzAcAL0rJkMnUuRqpBep82hGYLFf6LBZT0IYkE"; // Rất quan trọng
+
+    // --- Thông tin người dùng ---
+    const MY_USERNAME = "admin"; // Tên user của bạn (để sub private queue)
+    const PROJECT_ID_TO_JOIN = 51; // ID dự án bạn muốn chat
+    const RECEIVER_ID_TO_CHAT = 2; // ID user bạn muốn chat riêng
+
+    // --- Setup UI ---
+    document.getElementById("projectId").innerText = PROJECT_ID_TO_JOIN;
+    document.getElementById("receiverId").innerText = RECEIVER_ID_TO_CHAT;
+
+    let stompClient = null;
+
+    function connect() {
+        // Tạo header chứa token
+        let headers = {
+            'Authorization': 'Bearer ' + AUTH_TOKEN
+        };
+
+        const socket = new SockJS(`${API_BASE_URL}/ws`);
+        stompClient = Stomp.over(socket);
+
+        stompClient.connect(headers, function (frame) {
+            console.log('Đã kết nối: ' + frame);
+
+            // 1. Subscribe topic của DỰ ÁN
+            const projectTopic = `/topic/chat.project.${PROJECT_ID_TO_JOIN}`;
+            stompClient.subscribe(projectTopic, function (message) {
+                showMessage(JSON.parse(message.body), 'projectMessages');
+            });
+
+            // 2. Subscribe queue RIÊNG của BẠN
+            const privateQueue = `/user/${MY_USERNAME}/queue/chat.private`;
+            stompClient.subscribe(privateQueue, function (message) {
+                console.log("Tin nhắn riêng nhận được: ", message.body);
+                showMessage(JSON.parse(message.body), 'privateMessages');
+            });
+
+            // Tải lịch sử chat
+            loadHistory();
+
+        }, function(error) {
+            console.error("Lỗi kết nối: ", error);
+        });
+    }
+
+    // Gửi tin nhắn dự án
+    document.getElementById("projectForm").addEventListener("submit", function(e) {
+        e.preventDefault();
+        const content = document.getElementById("projectInput").value;
+        if(content && stompClient) {
+            const chatMessage = {
+                content: content,
+                projectId: PROJECT_ID_TO_JOIN,
+                receiverId: null
+            };
+            stompClient.send("/app/chat.project", {}, JSON.stringify(chatMessage));
+            document.getElementById("projectInput").value = '';
+        }
+    });
+
+    // Gửi tin nhắn riêng
+    document.getElementById("privateForm").addEventListener("submit", function(e) {
+        e.preventDefault();
+        const content = document.getElementById("privateInput").value;
+        if(content && stompClient) {
+            const chatMessage = {
+                content: content,
+                projectId: null,
+                receiverId: RECEIVER_ID_TO_CHAT
+            };
+            stompClient.send("/app/chat.private", {}, JSON.stringify(chatMessage));
+            document.getElementById("privateInput").value = '';
+        }
+    });
+
+    // Hiển thị tin nhắn
+    function showMessage(message, boxId) {
+        const messageBox = document.getElementById(boxId);
+        const p = document.createElement('p');
+        p.innerHTML = `<strong>${message.senderUsername || 'system'}:</strong> ${message.content}`;
+        p.style.margin = "5px 0";
+        messageBox.appendChild(p);
+        messageBox.scrollTop = messageBox.scrollHeight; // Cuộn xuống cuối
+    }
+
+    // Tải lịch sử (ví dụ cho project)
+    async function loadHistory() {
+        const headers = { 'Authorization': 'Bearer ' + AUTH_TOKEN };
+        try {
+            const response = await fetch(
+                `${API_BASE_URL}/api/v1/chat/project/${PROJECT_ID_TO_JOIN}/history?page=0`,
+                { headers }
+            );
+            if(response.ok) {
+                const history = await response.json();
+                history.forEach(msg => showMessage(msg, 'projectMessages'));
+            } else {
+                console.error("Không thể tải lịch sử");
+            }
+        } catch (e) {
+            console.error("Lỗi fetch history: ", e);
+        }
+    }
+
+    connect();
+</script>
+
 </body>
 </html>

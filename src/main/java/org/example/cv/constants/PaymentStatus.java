@@ -1,4 +1,7 @@
 package org.example.cv.constants;
 
-public class PaymentStatus {
+public enum PaymentStatus {
+    PENDING,  // Đang chờ
+    COMPLETED, // Hoàn thành
+    FAILED    // Thất bại
 }

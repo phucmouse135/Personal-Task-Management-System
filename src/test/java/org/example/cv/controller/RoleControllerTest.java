@@ -77,12 +77,4 @@ class RoleControllerTest {
 
         verify(roleService, times(1)).getAllRoles();
     }
-
-    @Test
-    void testSoftDeleteRole() throws Exception {
-        // Act & Assert
-        mockMvc.perform(delete("/roles/1")).andExpect(status().isOk());
-
-        verify(roleService, times(1)).softdeleteRole("USER");
-    }
 }

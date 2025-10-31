@@ -1,6 +1,7 @@
 package org.example.cv.models.responses;
 
 import java.time.Instant;
+import java.util.List;
 
 import org.example.cv.constants.TaskPriority;
 import org.example.cv.constants.TaskStatus;
@@ -17,7 +18,7 @@ public record TaskResponse(
         @Schema(example = "2025-11-30T18:00:00") Instant deadline,
         @Schema(example = "2025-10-25T14:30:00") Instant createdAt,
         ProjectSummaryResponse project,
-        UserSummaryResponse assignee,
+        List<UserSummaryResponse> assignees,
         @Schema(description = "Task có bị trễ hạn hay không", example = "false") boolean overdue) {
     // Logic kiểm tra trễ hạn được thêm vào DTO
     public boolean isOverdue() {

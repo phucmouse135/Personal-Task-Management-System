@@ -7,7 +7,10 @@ import static org.mockito.Mockito.*;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.example.cv.constants.TaskStatus;
 import org.example.cv.exceptions.AppException;
@@ -51,13 +54,15 @@ class TaskServiceImplTest {
     @BeforeEach
     void setUp() {
         existingAssignee = new UserEntity();
-        existingAssignee.setId(10L);
+        existingAssignee.setId(1L);
 
+        Set<UserEntity> userEntities = new HashSet<>();
+        userEntities.add(existingAssignee);
         existingTask = new TaskEntity();
         existingTask.setId(1L);
         existingTask.setTitle("Old Title");
         existingTask.setStatus(TaskStatus.IN_PROGRESS);
-        existingTask.setAssignee(existingAssignee);
+        existingTask.setAssignees(userEntities);
 
         taskResponse = new TaskResponse(1L, "New Title", null, TaskStatus.DONE, null, null, null, null, null, false);
     }
@@ -71,13 +76,14 @@ class TaskServiceImplTest {
                 null,
                 TaskStatus.DONE,
                 null,
-                Instant.now().plus(1, ChronoUnit.DAYS),
-                10L // Giữ nguyên assignee
-                );
+                Instant.now().plus(5, ChronoUnit.DAYS),
+                List.of(1L) // Thêm một assignee mới với ID 10
+        );
 
         when(taskRepository.findById(1L)).thenReturn(Optional.of(existingTask));
         when(taskRepository.save(any(TaskEntity.class))).thenReturn(existingTask);
         when(taskMapper.toTaskResponse(any(TaskEntity.class))).thenReturn(taskResponse);
+        when(userRepository.findById(anyLong())).thenReturn(Optional.of(existingAssignee));
 
         // Act
         TaskResponse result = taskService.updateTask(1L, request);
@@ -103,7 +109,7 @@ class TaskServiceImplTest {
                 TaskStatus.IN_PROGRESS, // Không thể từ CANCELLED -> IN_PROGRESS
                 null,
                 null,
-                10L);
+                List.of(10L));
 
         when(taskRepository.findById(1L)).thenReturn(Optional.of(existingTask));
 

@@ -44,6 +44,19 @@ spring:
                 token-uri: https://oauth2.googleapis.com/token
                 user-info-uri: https://www.googleapis.com/oauth2/v3/userinfo
                 user-name-attribute: email
+  mail:
+    host: ${SPRING_MAIL_HOST:smtp.gmail.com}
+    port: ${SPRING_MAIL_PORT:587}
+    username: ${SPRING_MAIL_USERNAME:phucchuot37@gmail.com}
+    password: ${SPRING_MAIL_PASSWORD:apppassword}
+    properties:
+        mail:
+            smtp:
+                auth: true
+                starttls.enable: true
+    from: ${SPRING_MAIL_FROM:phucchuot37@gmail.com}
+#  jackson:
+#    property-naming-strategy: SNAKE_CASE
 springdoc:
   swagger-ui:
     path: /swagger-ui.html
@@ -132,3 +145,10 @@ giffing:
       status-code: "TOO_MANY_REQUESTS"
       content-type: "application/json"
       body: '{"timestamp":"%s","status":429,"error":"Too Many Requests","message":"Rate limit exceeded. Please try again later.","path":"%s"}'
+payment:
+  vnpay:
+    tmn-code: ${VNPAY_TMN_CODE:CGMCYSQW}
+    hash-secret: ${VNPAY_HASH_SECRET:WUBV2NA106C6GZMGTC5GBWV5N9E8Q9FY}
+    pay-url: https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
+    return-url: http://localhost:8080/api/v1/payments/vnpay/return
+    api-url: https://sandbox.vnpayment.vn/merchant_webapi/merchant.html

@@ -21,4 +21,10 @@ public interface ProjectService {
 
     Page<ProjectResponse> getAllByOwnerId(
             Long ownerId, int page, int size, String sortBy, String sortDir, String filter);
+
+    ProjectResponse addMember(Long projectId, Long userId);
+
+    ProjectResponse removeMember(Long projectId, Long userId);
+
+    ProjectResponse changeOwner(Long projectId, Long newOwnerId);
 }

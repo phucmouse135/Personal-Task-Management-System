@@ -16,23 +16,25 @@ import org.mapstruct.MappingTarget;
 public interface TaskMapper {
 
     @Mapping(source = "project", target = "project")
-    @Mapping(source = "assignee", target = "assignee")
+    @Mapping(source = "assignees", target = "assignees")
     TaskResponse toTaskResponse(TaskEntity task);
 
     ProjectSummaryResponse projectToProjectSummaryResponse(ProjectEntity project);
 
+    @Mapping(target = "fullName", expression = "java(user.getFirstName() + \" \" + user.getLastName())")
     UserSummaryResponse userToUserSummaryResponse(UserEntity user);
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "status", ignore = true) // Sẽ được set default trong Service
     @Mapping(target = "project", ignore = true) // Service sẽ set
-    @Mapping(target = "assignee", ignore = true) // Service sẽ set
+    @Mapping(target = "assignees", ignore = true) // Service sẽ set
     TaskEntity toEntity(CreateTaskRequest request);
 
     @Mapping(target = "id", ignore = true)
-    //    @Mapping(target = "createdAt", ignore = true)
-    //    @Mapping(target = "updatedAt", ignore = true)
     @Mapping(target = "project", ignore = true) // Không cho phép đổi project
-    @Mapping(target = "assignee", ignore = true) // Service sẽ xử lý logic đổi assignee
+    @Mapping(target = "assignees", ignore = true) // Service sẽ xử lý logic đổi assignee
+    @Mapping(target = "createdAt", ignore = true)
+    @Mapping(target = "updatedAt", ignore = true)
+    @Mapping(target = "deletedAt", ignore = true)
     void updateEntityFromRequest(UpdateTaskRequest request, @MappingTarget TaskEntity task);
 }

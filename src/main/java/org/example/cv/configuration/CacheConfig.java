@@ -8,11 +8,6 @@ import java.util.concurrent.TimeUnit;
 import javax.cache.Caching;
 import javax.cache.spi.CachingProvider;
 
-import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import com.fasterxml.jackson.annotation.PropertyAccessor;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.redisson.config.Config;
 import org.redisson.jcache.configuration.RedissonConfiguration;
 import org.springframework.beans.factory.annotation.Value;
@@ -28,11 +23,16 @@ import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
+import org.springframework.data.redis.serializer.RedisSerializer;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.PropertyAccessor;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.github.benmanes.caffeine.cache.Caffeine;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.redis.serializer.RedisSerializer;
 
 @Configuration
 @Slf4j
@@ -67,8 +67,8 @@ public class CacheConfig {
 
         RedisSerializer<Object> serializer = new GenericJackson2JsonRedisSerializer(objectMapper);
         RedisCacheConfiguration defaultConfig = RedisCacheConfiguration.defaultCacheConfig()
-                .entryTtl(Duration.ofMinutes(15))
-                .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(serializer));
+                .entryTtl(Duration.ofMinutes(15)) // TTL mặc định 15 phút
+                .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(serializer)); // Sử dụng JSON
 
         // Cấu hình riêng cho từng cache name theo chiến lược
         Map<String, RedisCacheConfiguration> cacheConfigurations = Map.of(

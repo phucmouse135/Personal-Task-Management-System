@@ -66,4 +66,18 @@ public class GlobalExceptionHandler {
     public ResponseEntity<String> handleIllegalArgument(IllegalArgumentException ex) {
         return ResponseEntity.badRequest().body(ex.getMessage());
     }
+
+    // UsernameNotFoundException
+    @ExceptionHandler(org.springframework.security.core.userdetails.UsernameNotFoundException.class)
+    public ResponseEntity<String> handleUsernameNotFoundException(
+            org.springframework.security.core.userdetails.UsernameNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
+    }
+
+    // AuthenticationServiceException
+    @ExceptionHandler(org.springframework.security.authentication.AuthenticationServiceException.class)
+    public ResponseEntity<String> handleAuthenticationServiceException(
+            org.springframework.security.authentication.AuthenticationServiceException ex) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ex.getMessage());
+    }
 }
