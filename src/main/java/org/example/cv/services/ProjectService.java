@@ -1,6 +1,7 @@
 package org.example.cv.services;
 
 import org.example.cv.models.requests.ProjectRequest;
+import org.example.cv.models.responses.PageResponse;
 import org.example.cv.models.responses.ProjectResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
@@ -8,6 +9,8 @@ import org.springframework.stereotype.Service;
 @Service
 public interface ProjectService {
     Page<ProjectResponse> getAll(int page, int size, String sortBy, String sortDir, String filter);
+
+    Page<ProjectResponse> getMyProjects(int page, int size);
 
     ProjectResponse getById(Long id);
 
@@ -27,4 +30,8 @@ public interface ProjectService {
     ProjectResponse removeMember(Long projectId, Long userId);
 
     ProjectResponse changeOwner(Long projectId, Long newOwnerId);
+
+    PageResponse<ProjectResponse> getAllMySoftDeletedProjects(int page, int size);
+
+    PageResponse<ProjectResponse> getAllSoftDeletedProjects(int page, int size);
 }

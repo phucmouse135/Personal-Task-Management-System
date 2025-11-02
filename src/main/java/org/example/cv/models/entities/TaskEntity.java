@@ -14,7 +14,6 @@ import org.example.cv.event.Auditable;
 import org.example.cv.models.entities.base.BaseEntity;
 
 import lombok.*;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 @EqualsAndHashCode(callSuper = true)
 @Entity

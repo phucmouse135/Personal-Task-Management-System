@@ -44,4 +44,33 @@ public class TaskSecurityService {
 
         return false;
     }
+
+    /**
+     * Kiểm tra xem user hiện tại có phải là Assignee HOẶC Project Creator.
+     * Dùng cho việc update status - chỉ assignee hoặc creator mới được phép.
+     */
+    public boolean isAssigneeOrCreator(Long taskId) {
+        TaskEntity task = taskRepository.findTaskWithDetailsById(taskId).orElse(null);
+
+        if (task == null) {
+            return false;
+        }
+
+        Long currentId = AuthenticationUtils.getCurrentUserId();
+
+        // 1. Check if user is an assignee
+        for (UserEntity assignee : task.getAssignees()) {
+            if (assignee.getId().equals(currentId)) {
+                return true;
+            }
+        }
+
+        // 2. Check if user is the project owner (creator)
+        if (task.getProject().getOwner() != null
+                && task.getProject().getOwner().getId().equals(currentId)) {
+            return true;
+        }
+
+        return false;
+    }
 }

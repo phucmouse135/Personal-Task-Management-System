@@ -25,6 +25,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.access.prepost.PostAuthorize;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -81,6 +82,21 @@ public class UserServiceImpl implements UserService {
     public UserResponse getUserById(Long id) {
         log.info("Getting user by id: {}", id);
         UserEntity user = userRepository.findById(id).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+        return userMapper.toResponse(user);
+    }
+
+    /**
+     * Get current authenticated user info
+     *
+     * @return
+     */
+    @Override
+    public UserResponse getMyInfo() {
+        log.info("Getting current user info");
+        var context = SecurityContextHolder.getContext();
+        String username = context.getAuthentication().getName();
+        UserEntity user =
+                userRepository.findByUsername(username).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
         return userMapper.toResponse(user);
     }
 
@@ -201,5 +217,13 @@ public class UserServiceImpl implements UserService {
     public void restoreUser(Long id) {
         log.info("Restoring user by id: {}", id);
         userRepository.restoreById(id);
+    }
+
+    @Override
+    public UserResponse getUserByUsername(String username) {
+        log.info("Getting user by username: {}", username);
+        UserEntity user =
+                userRepository.findByUsername(username).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+        return userMapper.toResponse(user);
     }
 }

@@ -1,8 +1,6 @@
 package org.example.cv.services.impl;
 
-import jakarta.persistence.EntityListeners;
 import org.example.cv.constants.NotificationType;
-import org.example.cv.event.AuditLogEvent;
 import org.example.cv.event.PaymentSuccessEvent;
 import org.example.cv.event.TaskEvent;
 import org.example.cv.exceptions.AppException;
@@ -75,11 +73,14 @@ public class NotificationServiceImpl implements NotificationService {
     @Async
     @TransactionalEventListener
     @EventListener(PaymentSuccessEvent.class)
-    public void handlePaymentSuccessEvent(PaymentSuccessEvent event){
-        log.info( "Nhận PaymentSuccessEvent cho user ID {}" ,event.getPayment().getUser().getId());
+    public void handlePaymentSuccessEvent(PaymentSuccessEvent event) {
+        log.info(
+                "Nhận PaymentSuccessEvent cho user ID {}",
+                event.getPayment().getUser().getId());
 
         UserEntity recipient = event.getPayment().getUser();
-        String message = String.format("Thanh toán thành công số tiền: %s VND", event.getPayment().getAmount());
+        String message = String.format(
+                "Thanh toán thành công số tiền: %s VND", event.getPayment().getAmount());
         NotificationEntity notification = NotificationEntity.builder()
                 .recipient(recipient)
                 .type(NotificationType.PAYMENT_SUCCESS)
@@ -92,7 +93,6 @@ public class NotificationServiceImpl implements NotificationService {
         String destination = "user/" + recipient.getId() + "/queue/notifications";
         simpMessagingTemplate.convertAndSend(destination, response);
         log.info("Đã gửi real-time notification đến {}", destination);
-
     }
 
     private String buildMessage(TaskEntity task, UserEntity actor, NotificationType type) {

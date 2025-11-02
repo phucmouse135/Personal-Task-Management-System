@@ -15,6 +15,7 @@ import org.example.cv.models.entities.UserEntity;
 import org.example.cv.models.requests.TaskFilterRequest;
 import org.example.cv.models.responses.PageResponse;
 import org.example.cv.models.responses.TaskResponse;
+import org.example.cv.repositories.PaymentRepository;
 import org.example.cv.repositories.ProjectRepository;
 import org.example.cv.repositories.TaskRepository;
 import org.example.cv.repositories.UserRepository;
@@ -50,6 +51,9 @@ class TaskServiceIntegrationTest {
     private UserRepository userRepository;
 
     @Autowired
+    private PaymentRepository paymentRepository;
+
+    @Autowired
     private ApplicationEventPublisher eventPublisher;
 
     // === CẬP NHẬT ===
@@ -59,9 +63,10 @@ class TaskServiceIntegrationTest {
 
     @BeforeEach
     void setUpDatabase() {
-        // Xóa dữ liệu cũ theo đúng thứ tự (Task -> Project -> User)
+        // Xóa dữ liệu cũ theo đúng thứ tự (Task -> Payment -> Project -> User)
         // để tránh lỗi khóa ngoại
         taskRepository.deleteAllInBatch();
+        paymentRepository.deleteAllInBatch();
         projectRepository.deleteAllInBatch();
         userRepository.deleteAllInBatch();
 

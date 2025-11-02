@@ -1,11 +1,10 @@
 package org.example.cv.configuration;
 
+import java.util.Collection;
+
 import org.example.cv.models.entities.UserEntity;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
-
-import java.util.Collection;
-import java.util.List;
 
 public class CustomUserDetail implements UserDetails {
     private final UserEntity userEntity;
@@ -13,7 +12,6 @@ public class CustomUserDetail implements UserDetails {
     public CustomUserDetail(UserEntity userEntity) {
         this.userEntity = userEntity;
     }
-
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

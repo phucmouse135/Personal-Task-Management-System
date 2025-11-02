@@ -1,9 +1,11 @@
 package org.example.cv.services;
 
+import java.util.Map;
+import java.util.Objects;
+
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+
 import org.example.cv.configuration.VNPAYConfig;
 import org.example.cv.constants.PaymentStatus;
 import org.example.cv.event.PaymentSuccessEvent;
@@ -18,11 +20,13 @@ import org.example.cv.repositories.UserRepository;
 import org.example.cv.utils.AuthenticationUtils;
 import org.example.cv.utils.VNPAYUtil;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Map;
-import java.util.Objects;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
@@ -35,13 +39,31 @@ public class PaymentService {
     private final UserRepository userRepository;
     private final ApplicationEventPublisher eventPublisher;
 
+    /**
+     * Get all payments with pagination and optional status filter
+     */
+    public Page<PaymentEntity> getAllPayments(Pageable pageable, String status) {
+        if (status != null && !status.isEmpty()) {
+            try {
+                PaymentStatus paymentStatus = PaymentStatus.valueOf(status.toUpperCase());
+                return paymentRepository.findByStatus(paymentStatus, pageable);
+            } catch (IllegalArgumentException e) {
+                log.warn("Invalid payment status: {}, returning all payments", status);
+                return paymentRepository.findAll(pageable);
+            }
+        }
+        return paymentRepository.findAll(pageable);
+    }
+
     @Transactional
     public CreatePaymentResponse createPayment(CreatePaymentRequest request, HttpServletRequest httpServletRequest) {
 
-        ProjectEntity project = projectRepository.findById(request.getProjectId())
+        ProjectEntity project = projectRepository
+                .findById(request.getProjectId())
                 .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy dự án"));
 
-        UserEntity user = userRepository.findById(Objects.requireNonNull(AuthenticationUtils.getCurrentUserId()))
+        UserEntity user = userRepository
+                .findById(Objects.requireNonNull(AuthenticationUtils.getCurrentUserId()))
                 .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy người dùng"));
 
         // TODO: Security Check
@@ -111,15 +133,16 @@ public class PaymentService {
         String vnp_PayDate = params.get("vnp_PayDate");
 
         try {
-            PaymentEntity payment = paymentRepository.findById(Long.valueOf(vnp_TxnRef))
+            PaymentEntity payment = paymentRepository
+                    .findById(Long.valueOf(vnp_TxnRef))
                     .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy giao dịch"));
 
             // 2. Kiểm tra giao dịch đã được xử lý chưa
             if (payment.getStatus() != PaymentStatus.PENDING) {
                 log.warn("VNPAY Callback: Giao dịch {} đã được xử lý.", vnp_TxnRef);
-                return (payment.getStatus() == PaymentStatus.COMPLETED) ?
-                        vnpayConfig.getFrontendSuccessUrl() :
-                        vnpayConfig.getFrontendFailedUrl();
+                return (payment.getStatus() == PaymentStatus.COMPLETED)
+                        ? vnpayConfig.getFrontendSuccessUrl()
+                        : vnpayConfig.getFrontendFailedUrl();
             }
 
             // 3. Cập nhật trạng thái giao dịch

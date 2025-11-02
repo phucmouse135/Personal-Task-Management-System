@@ -68,7 +68,8 @@ public class CacheConfig {
         RedisSerializer<Object> serializer = new GenericJackson2JsonRedisSerializer(objectMapper);
         RedisCacheConfiguration defaultConfig = RedisCacheConfiguration.defaultCacheConfig()
                 .entryTtl(Duration.ofMinutes(15)) // TTL mặc định 15 phút
-                .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(serializer)); // Sử dụng JSON
+                .serializeValuesWith(
+                        RedisSerializationContext.SerializationPair.fromSerializer(serializer)); // Sử dụng JSON
 
         // Cấu hình riêng cho từng cache name theo chiến lược
         Map<String, RedisCacheConfiguration> cacheConfigurations = Map.of(

@@ -1,8 +1,9 @@
 package org.example.cv.event;
 
-import lombok.Getter;
 import org.example.cv.models.entities.PaymentEntity;
 import org.springframework.context.ApplicationEvent;
+
+import lombok.Getter;
 
 @Getter
 public class PaymentSuccessEvent extends ApplicationEvent {

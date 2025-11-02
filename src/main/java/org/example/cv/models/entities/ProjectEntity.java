@@ -1,5 +1,7 @@
 package org.example.cv.models.entities;
 
+import java.time.Instant;
+
 import jakarta.persistence.*;
 
 import org.example.cv.event.AuditLogListener;
@@ -10,7 +12,6 @@ import org.example.cv.utils.userSecurity.Ownable;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 @EqualsAndHashCode(callSuper = true)
 @Entity
@@ -24,9 +25,8 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @NamedEntityGraph(
         name = "ProjectEntity.owner",
         attributeNodes = {@NamedAttributeNode("owner"), @NamedAttributeNode("members")})
-
 @EntityListeners(AuditLogListener.class)
-public class ProjectEntity extends BaseEntity implements Ownable , Auditable {
+public class ProjectEntity extends BaseEntity implements Ownable, Auditable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -40,6 +40,11 @@ public class ProjectEntity extends BaseEntity implements Ownable , Auditable {
     @Column(columnDefinition = "TEXT")
     @Schema(description = "Description of the project", example = "This is a sample project.")
     private String description;
+
+    // project end date
+    @Column(name = "end_date")
+    @Schema(description = "End date of the project", example = "2024-12-31T23:59:59")
+    private Instant endDate;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "owner_id")

@@ -18,9 +18,23 @@ public class AuditLogEvent extends ApplicationEvent {
         this.actorId = actorId;
     }
 
-    public String getEntityType() { return entityType; }
-    public Long getEntityId() { return entityId; }
-    public String getAction() { return action; }
-    public String getDetails() { return details; }
-    public Long getActorId() { return actorId; }
+    public String getEntityType() {
+        return entityType;
+    }
+
+    public Long getEntityId() {
+        return entityId;
+    }
+
+    public String getAction() {
+        return action;
+    }
+
+    public String getDetails() {
+        return details;
+    }
+
+    public Long getActorId() {
+        return actorId;
+    }
 }

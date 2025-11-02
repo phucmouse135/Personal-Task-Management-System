@@ -25,4 +25,8 @@ public interface UserRepository extends BaseRepository<UserEntity, Long> {
     // findByUsername
     @EntityGraph(attributePaths = {"roles"})
     Optional<UserEntity> findByUsername(String username);
+
+    // findByEmail
+    @EntityGraph(attributePaths = {"roles"})
+    Optional<UserEntity> findByEmail(String email);
 }

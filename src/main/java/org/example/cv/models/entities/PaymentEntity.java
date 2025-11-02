@@ -1,14 +1,16 @@
 package org.example.cv.models.entities;
 
 import jakarta.persistence.*;
+
+import org.example.cv.constants.PaymentStatus;
+import org.example.cv.models.entities.base.BaseEntity;
+
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
-import org.example.cv.constants.PaymentStatus;
-import org.example.cv.models.entities.base.BaseEntity;
 
 @Entity
 @Table(name = "payments")
@@ -19,11 +21,7 @@ import org.example.cv.models.entities.base.BaseEntity;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @NamedEntityGraph(
         name = "Payment.withUserAndProject",
-        attributeNodes = {
-                @NamedAttributeNode("user"),
-                @NamedAttributeNode("project")
-        }
-)
+        attributeNodes = {@NamedAttributeNode("user"), @NamedAttributeNode("project")})
 public class PaymentEntity extends BaseEntity {
 
     @Id
@@ -37,7 +35,6 @@ public class PaymentEntity extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "project_id") // Có thể thanh toán cho 1 project
     ProjectEntity project;
-
 
     @Column(nullable = false)
     Long amount; // Số tiền (VND)

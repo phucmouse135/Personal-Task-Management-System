@@ -72,7 +72,6 @@ class ProjectServiceTest {
         projectRequest = ProjectRequest.builder()
                 .name("Test Project")
                 .description("Test Description")
-                .ownerId(1L)
                 .build();
 
         projectResponse = ProjectResponse.builder()

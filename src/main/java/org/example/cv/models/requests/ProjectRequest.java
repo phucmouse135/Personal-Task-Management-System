@@ -34,9 +34,12 @@ public class ProjectRequest {
             groups = {OnCreate.class, OnUpdate.class})
     String description;
 
-    @Schema(description = "Owner ID of the project", example = "1")
-    @NotNull(
-            message = "Owner ID is required",
-            groups = {OnUpdate.class})
-    Long ownerId;
+    @Schema(description = "End date of the project in ISO 8601 format", example = "2024-12-31T23:59:59Z")
+    String endDate;
+
+    //    @Schema(description = "Owner ID of the project", example = "1")
+    //    @NotNull(
+    //            message = "Owner ID is required",
+    //            groups = {OnUpdate.class})
+    //    Long ownerId;
 }

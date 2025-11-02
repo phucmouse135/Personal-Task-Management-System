@@ -9,6 +9,8 @@ import org.springframework.stereotype.Service;
 public interface UserService {
     UserResponse createUser(UserRequest userRequest);
 
+    UserResponse getMyInfo();
+
     UserResponse getUserById(Long id);
 
     Page<UserResponse> getAllUsers(int page, int size, String search, String sort, String direction);
@@ -22,4 +24,6 @@ public interface UserService {
     UserResponse removeRoleFromUser(Long userId, String roleId);
 
     void restoreUser(Long id);
+
+    UserResponse getUserByUsername(String username);
 }

@@ -5,6 +5,7 @@ import jakarta.validation.Valid;
 import org.example.cv.models.requests.CreateTaskRequest;
 import org.example.cv.models.requests.TaskFilterRequest;
 import org.example.cv.models.requests.UpdateTaskRequest;
+import org.example.cv.models.requests.UpdateTaskStatusRequest;
 import org.example.cv.models.responses.PageResponse;
 import org.example.cv.models.responses.TaskResponse;
 import org.example.cv.services.TaskService;
@@ -21,7 +22,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/api/v1/tasks")
+@RequestMapping("/tasks")
 @RequiredArgsConstructor
 @Tag(name = "Task Controller", description = "API cho quản lý Công việc")
 public class TaskController {
@@ -35,6 +36,15 @@ public class TaskController {
             @ParameterObject @Valid TaskFilterRequest filter,
             @ParameterObject @PageableDefault(size = 20, sort = "deadline") Pageable pageable) {
         PageResponse<TaskResponse> response = taskService.getAllTasks(filter, pageable);
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(summary = "Lấy danh sách task của người dùng hiện tại (có phân trang)")
+    @ApiResponse(responseCode = "200", description = "Thành công")
+    @GetMapping("/my-tasks")
+    public ResponseEntity<PageResponse<TaskResponse>> getMyTasks(
+            @ParameterObject @PageableDefault(size = 20, sort = "deadline") Pageable pageable) {
+        PageResponse<TaskResponse> response = taskService.getMyTasks(pageable);
         return ResponseEntity.ok(response);
     }
 
@@ -67,6 +77,17 @@ public class TaskController {
         return ResponseEntity.ok(response);
     }
 
+    @Operation(summary = "Cập nhật trạng thái task (PATCH) - cho assignee")
+    @ApiResponse(responseCode = "200", description = "Cập nhật trạng thái thành công")
+    @ApiResponse(responseCode = "404", description = "Không tìm thấy Task")
+    @ApiResponse(responseCode = "403", description = "Không có quyền truy cập")
+    @PatchMapping("/{id}/status")
+    public ResponseEntity<TaskResponse> updateTaskStatus(
+            @PathVariable Long id, @Valid @RequestBody UpdateTaskStatusRequest request) {
+        TaskResponse response = taskService.updateTaskStatus(id, request);
+        return ResponseEntity.ok(response);
+    }
+
     @Operation(summary = "Xóa một task")
     @ApiResponse(responseCode = "204", description = "Xóa thành công")
     @ApiResponse(responseCode = "404", description = "Không tìm thấy Task")
@@ -75,5 +96,31 @@ public class TaskController {
     public ResponseEntity<Void> deleteTask(@PathVariable Long id) {
         taskService.deleteTask(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @Operation(summary = "Khôi phục một task đã xóa")
+    @ApiResponse(responseCode = "204", description = "Khôi phục thành công")
+    @ApiResponse(responseCode = "404", description = "Không tìm thấy Task")
+    @ApiResponse(responseCode = "403", description = "Không có quyền truy cập")
+    @PatchMapping("/{id}/restore")
+    public ResponseEntity<Void> restoreTask(@PathVariable Long id) {
+        taskService.restoreTask(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @Operation(summary = "Lấy danh sách Task đã xóa mềm")
+    @ApiResponse(responseCode = "200", description = "Lấy danh sách thành công")
+    @GetMapping("/soft-deleted")
+    public ResponseEntity<PageResponse<TaskResponse>> getSoftDeletedTasks(
+            @RequestParam(defaultValue = "my") String scope,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        PageResponse<TaskResponse> response;
+        if ("all".equals(scope)) {
+            response = taskService.getAllSoftDeletedTasks(page, size);
+        } else {
+            response = taskService.getAllMySoftDeletedTasks(page, size);
+        }
+        return ResponseEntity.ok(response);
     }
 }

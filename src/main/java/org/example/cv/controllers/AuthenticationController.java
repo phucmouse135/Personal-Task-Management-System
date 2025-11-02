@@ -5,6 +5,7 @@ import java.text.ParseException;
 import jakarta.validation.Valid;
 
 import org.example.cv.models.requests.AuthenticationRequest;
+import org.example.cv.models.requests.GoogleLoginRequest;
 import org.example.cv.models.requests.IntrospectRequest;
 import org.example.cv.models.requests.LogoutRequest;
 import org.example.cv.models.requests.RefreshRequest;
@@ -12,7 +13,6 @@ import org.example.cv.models.responses.ApiResponse;
 import org.example.cv.models.responses.AuthenticationResponse;
 import org.example.cv.models.responses.IntrospectResponse;
 import org.example.cv.services.AuthenticationService;
-import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.web.bind.annotation.*;
 
 import com.nimbusds.jose.JOSEException;
@@ -82,35 +82,21 @@ public class AuthenticationController {
      * @return ApiResponse containing the authentication token
      */
     @Operation(summary = "Authenticate", description = "Authenticate a user and generate an authentication token")
-    @PostMapping(value = "/token", consumes = "application/json", produces = "application/json")
+    @PostMapping(value = "/login", consumes = "application/json", produces = "application/json")
     ApiResponse<AuthenticationResponse> authenticate(@RequestBody @Valid AuthenticationRequest request) {
         var result = authenticationService.authenticate(request);
         return ApiResponse.<AuthenticationResponse>builder().result(result).build();
     }
-
     /**
-     * Endpoint to authenticate a user via an external provider using an authorization code.
-     */
-    @Operation(
-            summary = "Outbound Authenticate",
-            description = "Authenticate a user via an external provider using an authorization code")
-    @PostMapping("/outbound/authenticate")
-    public ApiResponse<AuthenticationResponse> outboundAuthenticate(@RequestBody @Valid OAuth2User oAuth2User) {
-        var result = authenticationService.outboundAuthenticate(oAuth2User);
-        return ApiResponse.<AuthenticationResponse>builder().result(result).build();
-    }
-
-    /**
-     * Handle OAuth2 callback from Google
+     * Endpoint to authenticate a user via Google ID Token (for React frontend).
      *
-     * @param code  the authorization code returned by Google
-     * @param state the state parameter to prevent CSRF attacks
-     * @return a response indicating the result of the authentication
+     * @param request the Google login request containing the ID token
+     * @return ApiResponse containing the authentication token
      */
-    @Operation(summary = "Handle Google OAuth2 Callback", description = "Handle the OAuth2 callback from Google")
-    @GetMapping("/login/oauth2/code/google")
-    public String handleGoogleCallback(@RequestParam("code") String code, @RequestParam("state") String state) {
-        // Đây là authorization code Google trả về
-        return "Authorization Code: " + code;
+    @Operation(summary = "Google Login", description = "Authenticate a user using Google ID Token")
+    @PostMapping("/google")
+    ApiResponse<AuthenticationResponse> googleLogin(@RequestBody @Valid GoogleLoginRequest request) {
+        var result = authenticationService.authenticateWithGoogle(request);
+        return ApiResponse.<AuthenticationResponse>builder().result(result).build();
     }
 }

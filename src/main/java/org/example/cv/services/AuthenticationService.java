@@ -3,6 +3,7 @@ package org.example.cv.services;
 import java.text.ParseException;
 
 import org.example.cv.models.requests.AuthenticationRequest;
+import org.example.cv.models.requests.GoogleLoginRequest;
 import org.example.cv.models.requests.IntrospectRequest;
 import org.example.cv.models.requests.LogoutRequest;
 import org.example.cv.models.requests.RefreshRequest;
@@ -25,4 +26,6 @@ public interface AuthenticationService {
     void logout(LogoutRequest request) throws ParseException, JOSEException;
 
     AuthenticationResponse refreshToken(RefreshRequest request) throws ParseException, JOSEException;
+
+    AuthenticationResponse authenticateWithGoogle(GoogleLoginRequest request);
 }

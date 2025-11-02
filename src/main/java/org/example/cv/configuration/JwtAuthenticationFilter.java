@@ -26,8 +26,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private CustomUserDetailService customUserDetailService;
     private AuthenticationService authenticationService;
 
-    JwtAuthenticationFilter(@Lazy AuthenticationService authenticationService,
-            CustomUserDetailService customUserDetailService ) {
+    JwtAuthenticationFilter(
+            @Lazy AuthenticationService authenticationService, CustomUserDetailService customUserDetailService) {
         this.authenticationService = authenticationService;
         this.customUserDetailService = customUserDetailService;
     }

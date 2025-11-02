@@ -78,7 +78,7 @@ class TaskServiceImplTest {
                 null,
                 Instant.now().plus(5, ChronoUnit.DAYS),
                 List.of(1L) // Thêm một assignee mới với ID 10
-        );
+                );
 
         when(taskRepository.findById(1L)).thenReturn(Optional.of(existingTask));
         when(taskRepository.save(any(TaskEntity.class))).thenReturn(existingTask);

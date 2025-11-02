@@ -21,7 +21,8 @@ public class TaskSpecification {
                 predicates.add(cb.equal(root.get("project").get("id"), filter.projectId()));
             }
             if (filter.assigneeId() != null) {
-                predicates.add(cb.equal(root.get("assignee").get("id"), filter.assigneeId()));
+                predicates.add(
+                        cb.isMember(filter.assigneeId(), root.join("assignees").get("id")));
             }
             if (!CollectionUtils.isEmpty(filter.statuses())) {
                 predicates.add(root.get("status").in(filter.statuses()));
@@ -37,10 +38,12 @@ public class TaskSpecification {
                         root.get("deadline"), filter.deadlineTo().plus(1, ChronoUnit.DAYS)));
             }
 
-            // Tránh N+1 query
-            query.distinct(true);
-            root.fetch("project");
-            root.fetch("assignee");
+            // Tránh N+1 query - chỉ fetch khi query trả về entity (không phải count query)
+            if (query.getResultType().equals(TaskEntity.class)) {
+                query.distinct(true);
+                root.fetch("project");
+                root.fetch("assignees");
+            }
 
             return cb.and(predicates.toArray(new Predicate[0]));
         };

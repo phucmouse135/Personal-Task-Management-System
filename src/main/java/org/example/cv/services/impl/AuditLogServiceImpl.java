@@ -1,7 +1,7 @@
 package org.example.cv.services.impl;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.time.Instant;
+
 import org.example.cv.event.AuditLogEvent;
 import org.example.cv.models.entities.AuditLogEntity;
 import org.example.cv.repositories.AuditLogRepository;
@@ -11,7 +11,8 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.event.TransactionalEventListener;
 
-import java.time.Instant;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @Slf4j
@@ -34,6 +35,10 @@ public class AuditLogServiceImpl implements AuditLogService {
                 .build();
 
         auditLogRepository.save(entity);
-        log.info("✅ [Async] Saved audit log: {} {} id={}", event.getAction(), event.getEntityType(), event.getEntityId());
+        log.info(
+                "✅ [Async] Saved audit log: {} {} id={}",
+                event.getAction(),
+                event.getEntityType(),
+                event.getEntityId());
     }
 }

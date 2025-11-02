@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.example.cv.models.responses.ApiResponse;
 import org.example.cv.models.responses.ChatMessageDTO;
+import org.example.cv.models.responses.UserResponse;
 import org.example.cv.services.ChatService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -91,5 +92,43 @@ public class ChatController {
         log.info("Received request to get private chat history");
         List<ChatMessageDTO.Response> chatHistory = chatService.getPrivateChatHistory(otherUserId, page);
         return ResponseEntity.ok(new ApiResponse<>(200, "Private chat history retrieved successfully", chatHistory));
+    }
+
+    /**
+     * Get list of conversations for current user
+     * @return
+     */
+    @Operation(summary = "Get list of conversations")
+    @GetMapping("/api/chat/conversations")
+    public ResponseEntity<ApiResponse<List<ChatMessageDTO.ConversationDTO>>> getConversations() {
+        log.info("Received request to get conversations list");
+        List<ChatMessageDTO.ConversationDTO> conversations = chatService.getConversations();
+        return ResponseEntity.ok(new ApiResponse<>(200, "Conversations retrieved successfully", conversations));
+    }
+
+    /**
+     * Get list of members available for chat
+     * @param search Search query for username/email
+     * @return
+     */
+    @Operation(summary = "Get list of members available for chat")
+    @GetMapping("/api/chat/members")
+    public ResponseEntity<ApiResponse<List<UserResponse>>> getChatMembers(
+            @RequestParam(required = false) String search) {
+        log.info("Received request to get chat members with search: {}", search);
+        List<UserResponse> members = chatService.getChatMembers(search);
+        return ResponseEntity.ok(new ApiResponse<>(200, "Chat members retrieved successfully", members));
+    }
+
+    /**
+     * Get list of project conversations (group chats)
+     * @return
+     */
+    @Operation(summary = "Get list of project group chats")
+    @GetMapping("/api/chat/projects")
+    public ResponseEntity<ApiResponse<List<ChatMessageDTO.ProjectConversationDTO>>> getProjectConversations() {
+        log.info("Received request to get project conversations");
+        List<ChatMessageDTO.ProjectConversationDTO> projects = chatService.getProjectConversations();
+        return ResponseEntity.ok(new ApiResponse<>(200, "Project conversations retrieved successfully", projects));
     }
 }

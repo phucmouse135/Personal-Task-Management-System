@@ -1,10 +1,11 @@
 package org.example.cv.models.entities;
 
+import java.time.Instant;
+
 import jakarta.persistence.*;
+
 import lombok.*;
 import lombok.experimental.FieldDefaults;
-
-import java.time.Instant;
 
 @Entity
 @Table(name = "audit_logs")

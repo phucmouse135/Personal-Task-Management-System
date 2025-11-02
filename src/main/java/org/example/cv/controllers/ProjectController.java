@@ -6,6 +6,7 @@ import org.example.cv.models.requests.ProjectRequest;
 import org.example.cv.models.requests.validationgroups.OnCreate;
 import org.example.cv.models.requests.validationgroups.OnUpdate;
 import org.example.cv.models.responses.ApiResponse;
+import org.example.cv.models.responses.PageResponse;
 import org.example.cv.models.responses.ProjectResponse;
 import org.example.cv.services.ProjectService;
 import org.springframework.data.domain.Page;
@@ -62,6 +63,19 @@ public class ProjectController {
                 .build();
     }
 
+    @Operation(summary = "Lấy danh sách projects của người dùng hiện tại")
+    @GetMapping("/my-projects")
+    public ApiResponse<Page<ProjectResponse>> getMyProjects(
+            @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size) {
+        log.info("Request to get my projects: page={}, size={}", page, size);
+        Page<ProjectResponse> projects = projectService.getMyProjects(page, size);
+        return ApiResponse.<Page<ProjectResponse>>builder()
+                .code(200)
+                .result(projects)
+                .message("My projects retrieved successfully")
+                .build();
+    }
+
     // ProjectResponse getById(Long id);
     /**
      * Get project by id
@@ -80,7 +94,6 @@ public class ProjectController {
                 .build();
     }
 
-    // ProjectResponse create(ProjectRequest request);
     /**
      * Create a new project
      * @param request
@@ -149,6 +162,30 @@ public class ProjectController {
         return ApiResponse.<Void>builder()
                 .code(200)
                 .message("Project restored successfully")
+                .build();
+    }
+
+    @Operation(summary = "Lấy danh sách tất cả projects đã bị xóa mềm (Admin hoặc My projects)")
+    @GetMapping("/soft-deleted")
+    public ApiResponse<PageResponse<ProjectResponse>> getSoftDeletedProjects(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "all") String scope) {
+        log.info("Request to get soft deleted projects: page={}, size={}, scope={}", page, size, scope);
+        PageResponse<ProjectResponse> projects;
+
+        if ("my".equalsIgnoreCase(scope)) {
+            // Lấy soft deleted projects của user hiện tại
+            projects = projectService.getAllMySoftDeletedProjects(page, size);
+        } else {
+            // Lấy tất cả soft deleted projects (admin)
+            projects = projectService.getAllSoftDeletedProjects(page, size);
+        }
+
+        return ApiResponse.<PageResponse<ProjectResponse>>builder()
+                .code(200)
+                .result(projects)
+                .message("Soft deleted projects retrieved successfully")
                 .build();
     }
 

@@ -1,0 +1,15 @@
+package org.example.cv.models.responses;
+
+import lombok.*;
+import lombok.experimental.FieldDefaults;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+@FieldDefaults(level = AccessLevel.PRIVATE)
+public class TaskProjectCountResponse {
+    Long projectId;
+    String projectName;
+    Long count;
+}

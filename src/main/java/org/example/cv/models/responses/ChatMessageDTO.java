@@ -76,4 +76,53 @@ public class ChatMessageDTO {
         @Schema(description = "Sender username", example = "alice", accessMode = Schema.AccessMode.READ_ONLY)
         private String senderUsername;
     }
+
+    /**
+     * DTO for conversation list item
+     */
+    @Data
+    @lombok.Builder
+    @Schema(description = "Conversation information for chat list")
+    public static class ConversationDTO {
+        @Schema(description = "User ID of the conversation partner", example = "123")
+        private Long userId;
+
+        @Schema(description = "Name of the conversation partner", example = "John Doe")
+        private String name;
+
+        @Schema(description = "Email of the conversation partner", example = "john@example.com")
+        private String email;
+
+        @Schema(description = "Last message content", example = "See you tomorrow!")
+        private String lastMessage;
+
+        @Schema(description = "Last message timestamp", example = "2025-11-01T10:30:00")
+        private Instant lastMessageTime;
+
+        @Schema(description = "Online status", example = "true")
+        private Boolean online;
+    }
+
+    /**
+     * DTO for project conversation/group chat
+     */
+    @Data
+    @lombok.Builder
+    @Schema(description = "Project group chat information")
+    public static class ProjectConversationDTO {
+        @Schema(description = "Project ID", example = "1")
+        private Long projectId;
+
+        @Schema(description = "Project name", example = "My Project")
+        private String projectName;
+
+        @Schema(description = "Number of members", example = "5")
+        private Integer memberCount;
+
+        @Schema(description = "Last message content", example = "Meeting at 3 PM")
+        private String lastMessage;
+
+        @Schema(description = "Last message timestamp", example = "2025-11-01T10:30:00")
+        private Instant lastMessageTime;
+    }
 }

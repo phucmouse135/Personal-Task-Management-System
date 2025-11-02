@@ -42,6 +42,19 @@ public class UserController {
         return ApiResponse.<UserResponse>builder().result(userResponse).build();
     }
 
+    /**
+     * Get current logged-in user info
+     * Endpoint to retrieve the current authenticated user's details.
+     */
+    @Operation(summary = "Get current user info", description = "Retrieves the current authenticated user's details")
+    @GetMapping("/myInfo")
+    public ApiResponse<UserResponse> getMyInfo() {
+        log.info("Received request to get current user info");
+        UserResponse userResponse = userService.getMyInfo();
+        log.info("Current user retrieved successfully: {}", userResponse.getUsername());
+        return ApiResponse.<UserResponse>builder().result(userResponse).build();
+    }
+
     // UserResponse getUserById(Long id);
     /**
      * Get user by ID
@@ -162,5 +175,20 @@ public class UserController {
         return ApiResponse.<String>builder()
                 .result("User restored successfully")
                 .build();
+    }
+
+    // UserResponse getUserByUsername(String username);
+    /**
+     * Get user by username
+     * Endpoint to retrieve user details by their username.
+     */
+    @Operation(summary = "Get user by username", description = "Retrieves user details by their username")
+    @Parameter(name = "username", description = "Username of the user to retrieve", required = true)
+    @GetMapping("/username/{username}")
+    public ApiResponse<UserResponse> getUserByUsername(@PathVariable("username") String username) {
+        log.info("Received request to get user by username: {}", username);
+        UserResponse userResponse = userService.getUserByUsername(username);
+        log.info("User retrieved successfully: {}", userResponse.getUsername());
+        return ApiResponse.<UserResponse>builder().result(userResponse).build();
     }
 }
