@@ -1,22 +1,35 @@
 package org.example.cv.exceptions;
 
-import lombok.Getter;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
+
+import lombok.Getter;
 
 @Getter
 public enum ErrorCode {
     UNCATEGORIZED_EXCEPTION(9999, "Uncategorized error", HttpStatus.INTERNAL_SERVER_ERROR),
     INVALID_KEY(1001, "Uncategorized error", HttpStatus.BAD_REQUEST),
     USER_EXISTED(1002, "User existed", HttpStatus.BAD_REQUEST),
+    USER_NOT_FOUND(1000, "User not found", HttpStatus.NOT_FOUND),
     USERNAME_INVALID(1003, "Username must be at least {min} characters", HttpStatus.BAD_REQUEST),
     INVALID_PASSWORD(1004, "Password must be at least {min} characters", HttpStatus.BAD_REQUEST),
     USER_NOT_EXISTED(1005, "User not existed", HttpStatus.NOT_FOUND),
     UNAUTHENTICATED(1006, "Unauthenticated", HttpStatus.UNAUTHORIZED),
     UNAUTHORIZED(1007, "You do not have permission", HttpStatus.FORBIDDEN),
     INVALID_DOB(1008, "Your age must be at least {min}", HttpStatus.BAD_REQUEST),
-    ROLE_NOT_EXISTED(1009, "Role not existed", HttpStatus.NOT_FOUND)
-    ;
+    UNAUTHORIZED_ACTION(1015, "You are not allowed to perform this action", HttpStatus.FORBIDDEN),
+    NOTIFICATION_NOT_EXISTED(1016, "Notification not existed", HttpStatus.NOT_FOUND),
+    INVALID_TOKEN(1019, "Invalid token", HttpStatus.UNAUTHORIZED),
+    ROLE_NOT_EXISTED(1009, "Role not existed", HttpStatus.NOT_FOUND),
+    USER_NOT_PROJECT_OWNER(1011, "User is not the owner of the project", HttpStatus.BAD_REQUEST),
+    ENTITY_NOT_OWNABLE(1011, "Entity is not ownable", HttpStatus.INTERNAL_SERVER_ERROR),
+    TASK_NOT_EXISTED(1012, "Task not existed", HttpStatus.NOT_FOUND),
+    EMAIL_SENDING_FAILED(1017, "Failed to send email", HttpStatus.INTERNAL_SERVER_ERROR),
+    INVALID_EMAIL_FORMAT(1018, "Invalid email format", HttpStatus.BAD_REQUEST),
+    USER_NOT_PROJECT_MEMBER(1014, "User is not a member of the project", HttpStatus.BAD_REQUEST),
+    INVALID_TASK_STATUS_TRANSITION(1013, "Invalid task status transition from {from} to {to}", HttpStatus.BAD_REQUEST),
+    REPOSITORY_NOT_FOUND(1020, "Repository not found for the given entity", HttpStatus.INTERNAL_SERVER_ERROR),
+    PROJECT_NOT_EXISTED(1010, "Project not existed", HttpStatus.NOT_FOUND);
 
     ErrorCode(int code, String message, HttpStatusCode statusCode) {
         this.code = code;

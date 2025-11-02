@@ -1,0 +1,145 @@
+spring:
+  application:
+    name: CV-Service
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        default_batch_fetch_size: 100
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/cvdb}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:123456}
+    driver-class-name: org.postgresql.Driver
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+    url: ${SPRING_FLYWAY_URL:${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/cvdb}}
+    user: ${SPRING_FLYWAY_USER:${SPRING_DATASOURCE_USERNAME:postgres}}
+    password: ${SPRING_FLYWAY_PASSWORD:${SPRING_DATASOURCE_PASSWORD:123456}}
+  security:
+    user:
+      name: ${SPRING_SECURITY_USER_NAME:admin}
+      password: ${SPRING_SECURITY_USER_PASSWORD:admin123}
+    oauth2:
+      client:
+        registration:
+            google:
+                client-id: ${GOOGLE_CLIENT_ID:101718001419-32m56mclhudonq2bg6ljknblod4rtsmn.apps.googleusercontent.com}
+                client-secret: ${GOOGLE_CLIENT_SECRET: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}
+                scope:
+                - email
+                - profile
+                redirect-uri: ${GOOGLE_REDIRECT_URI:http://localhost:8080/login/oauth2/code/google}
+        provider:
+            google:
+                issuer-uri: https://accounts.google.com
+                authorization-uri: https://accounts.google.com/o/oauth2/auth
+                token-uri: https://oauth2.googleapis.com/token
+                user-info-uri: https://www.googleapis.com/oauth2/v3/userinfo
+                user-name-attribute: email
+  mail:
+    host: ${SPRING_MAIL_HOST:smtp.gmail.com}
+    port: ${SPRING_MAIL_PORT:587}
+    username: ${SPRING_MAIL_USERNAME:phucchuot37@gmail.com}
+    password: ${SPRING_MAIL_PASSWORD:yourpassword}
+    properties:
+        mail:
+            smtp:
+                auth: true
+                starttls.enable: true
+    from: ${SPRING_MAIL_FROM:phucchuot37@gmail.com}
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+  api-docs:
+    path: /v3/api-docs
+  override-with-generic-response: false
+
+
+jwt:
+  secret: ${JWT_SECRET:mysecretkeymysecretkeymysecretkey}
+  expiration: ${JWT_EXPIRATION:3600000} # 1 hour in milliseconds
+
+outbound:
+  google:
+    client-id: ${GOOGLE_CLIENT_ID:101718001419-32m56mclhudonq2bg6ljknblod4rtsmn.apps.googleusercontent.com}
+    client-secret: ${GOOGLE_CLIENT_SECRET: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}
+    redirect-uri: ${GOOGLE_REDIRECT_URI:http://localhost:8080/login/oauth2/code/google}
+server:
+  port: ${SERVER_PORT:8080}
+
+cache:
+  redis:
+    host: ${REDIS_HOST:localhost}
+    port: ${REDIS_PORT:6379}
+    username: ${REDIS_USERNAME:root}
+    password: ${REDIS_PASSWORD:root}
+    ttl:
+      default: ${REDIS_TTL:600} # Time to live in seconds
+      project-details: ${REDIS_PROJECT_DETAILS_TTL:300} # Time to live for project details in seconds
+  caffeine:
+    ttl: ${CAFFEINE_TTL:600} # Time to live in seconds
+    maximum-size: ${CAFFEINE_MAXIMUM_SIZE:1000} # Maximum size of the cache
+
+giffing:
+  bucket4j:
+    enabled: ${BUCKET4J_ENABLED:true}
+    cache-name: ${BUCKET4J_CACHE_NAME:redis-limit-buckets}
+    filters:
+
+      # ------ KỊCH BẢN 1: Giới hạn theo User ID (API đã đăng nhập) ------
+      # (Giả sử bạn dùng Spring Security)
+      - cache-name: "rate-limit-buckets"
+        order: 1 # Ưu tiên cao nhất
+        # Áp dụng cho mọi API private
+        url: "/api/*"
+        strategy: FIRST
+
+        # Key động: Dùng "username" (hoặc ID) của user đã xác thực
+        # getPrincipal().getName() lấy username từ Spring Security Context
+        execute-condition: "getPrincipal() != null"
+        expression: "getPrincipal().getName()"
+
+        rate-limits:
+          # Mỗi User (ví dụ: "user_A", "user_B") sẽ có bucket riêng
+          - bandwidth:
+              capacity: 100     # 100 requests
+              time: 1           #
+              unit: MINUTES   # mỗi phút
+            refill-strategy: GREEDY
+          - bandwidth:
+              capacity: 30    # 1000 requests
+              time: 1
+              unit: SECONDS     # mỗi giờ
+            refill-strategy: GREEDY
+
+      # ------ KỊCH BẢN 2: Giới hạn theo IP (API công khai) ------
+      - cache-name: "rate-limit-buckets"
+        order: 2 # Chạy sau kịch bản 1
+        # Áp dụng cho API public
+        url: "/api/*"
+        strategy: FIRST
+
+        # Key động: Dùng địa chỉ IP
+        # X-Forwarded-For là header tiêu chuẩn khi đi qua Proxy/Load Balancer
+        expression: "getHeader('X-Forwarded-For') != null ? getHeader('X-Forwarded-For') : getRemoteAddr()"
+
+        rate-limits:
+          # Mỗi IP sẽ có bucket 10 reqs/phút của riêng mình
+          - bandwidth:
+              capacity: 10
+              time: 1
+              unit: MINUTES
+            refill-strategy: GREEDY
+
+    response:
+      status-code: "TOO_MANY_REQUESTS"
+      content-type: "application/json"
+      body: '{"timestamp":"%s","status":429,"error":"Too Many Requests","message":"Rate limit exceeded. Please try again later.","path":"%s"}'

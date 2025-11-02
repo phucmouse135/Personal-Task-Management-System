@@ -1,12 +1,11 @@
 package org.example.cv.controllers;
 
-import com.nimbusds.jose.JOSEException;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.AccessLevel;
-import lombok.RequiredArgsConstructor;
-import lombok.experimental.FieldDefaults;
+import java.text.ParseException;
+
+import jakarta.validation.Valid;
+
 import org.example.cv.models.requests.AuthenticationRequest;
+import org.example.cv.models.requests.GoogleLoginRequest;
 import org.example.cv.models.requests.IntrospectRequest;
 import org.example.cv.models.requests.LogoutRequest;
 import org.example.cv.models.requests.RefreshRequest;
@@ -14,12 +13,15 @@ import org.example.cv.models.responses.ApiResponse;
 import org.example.cv.models.responses.AuthenticationResponse;
 import org.example.cv.models.responses.IntrospectResponse;
 import org.example.cv.services.AuthenticationService;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
-import java.text.ParseException;
+import com.nimbusds.jose.JOSEException;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
 
 @RestController
 @RequestMapping("/auth")
@@ -37,7 +39,7 @@ public class AuthenticationController {
      */
     @Operation(summary = "Introspect Token", description = "Check the validity of a given token")
     @PostMapping(value = "/introspect")
-    ApiResponse<IntrospectResponse> introspectResponseApiResponse(@RequestBody IntrospectRequest request) {
+    ApiResponse<IntrospectResponse> introspectResponseApiResponse(@RequestBody @Valid IntrospectRequest request) {
         var result = authenticationService.introspect(request);
         return ApiResponse.<IntrospectResponse>builder().result(result).build();
     }
@@ -52,7 +54,7 @@ public class AuthenticationController {
      */
     @Operation(summary = "Refresh Token", description = "Refresh an existing authentication token")
     @PostMapping("/refresh")
-    ApiResponse<AuthenticationResponse> authenticate(@RequestBody RefreshRequest request)
+    ApiResponse<AuthenticationResponse> authenticate(@RequestBody @Valid RefreshRequest request)
             throws ParseException, JOSEException {
         var result = authenticationService.refreshToken(request);
         return ApiResponse.<AuthenticationResponse>builder().result(result).build();
@@ -68,7 +70,7 @@ public class AuthenticationController {
      */
     @Operation(summary = "Logout", description = "Log out a user by invalidating their token")
     @PostMapping("/logout")
-    ApiResponse<Void> logout(@RequestBody LogoutRequest request) throws ParseException, JOSEException {
+    ApiResponse<Void> logout(@RequestBody @Valid LogoutRequest request) throws ParseException, JOSEException {
         authenticationService.logout(request);
         return ApiResponse.<Void>builder().build();
     }
@@ -80,10 +82,21 @@ public class AuthenticationController {
      * @return ApiResponse containing the authentication token
      */
     @Operation(summary = "Authenticate", description = "Authenticate a user and generate an authentication token")
-    @PostMapping(value = "/token", consumes = "application/json", produces = "application/json")
-    ApiResponse<AuthenticationResponse> authenticate(@RequestBody AuthenticationRequest request) {
+    @PostMapping(value = "/login", consumes = "application/json", produces = "application/json")
+    ApiResponse<AuthenticationResponse> authenticate(@RequestBody @Valid AuthenticationRequest request) {
         var result = authenticationService.authenticate(request);
         return ApiResponse.<AuthenticationResponse>builder().result(result).build();
     }
-
+    /**
+     * Endpoint to authenticate a user via Google ID Token (for React frontend).
+     *
+     * @param request the Google login request containing the ID token
+     * @return ApiResponse containing the authentication token
+     */
+    @Operation(summary = "Google Login", description = "Authenticate a user using Google ID Token")
+    @PostMapping("/google")
+    ApiResponse<AuthenticationResponse> googleLogin(@RequestBody @Valid GoogleLoginRequest request) {
+        var result = authenticationService.authenticateWithGoogle(request);
+        return ApiResponse.<AuthenticationResponse>builder().result(result).build();
+    }
 }

@@ -1,22 +1,23 @@
 package org.example.cv.models.entities.base;
 
+import java.time.Instant;
 
-import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
 import jakarta.persistence.MappedSuperclass;
-import lombok.*;
+
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
-import java.time.Instant;
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.*;
+
 @MappedSuperclass
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-@Builder
 @Schema(name = "BaseEntity", description = "Base entity with common fields")
-public abstract class BaseEntity {
+public class BaseEntity {
     @CreationTimestamp
     @Column(name = "created_at")
     @Schema(description = "Creation timestamp", example = "2023-10-01T12:00:00Z")

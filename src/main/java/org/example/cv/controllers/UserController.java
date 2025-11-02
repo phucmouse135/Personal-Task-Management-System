@@ -1,5 +1,14 @@
 package org.example.cv.controllers;
 
+import jakarta.validation.Valid;
+
+import org.example.cv.models.requests.UserRequest;
+import org.example.cv.models.responses.ApiResponse;
+import org.example.cv.models.responses.UserResponse;
+import org.example.cv.services.UserService;
+import org.springframework.data.domain.Page;
+import org.springframework.web.bind.annotation.*;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -7,12 +16,6 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
-import org.example.cv.models.requests.UserRequest;
-import org.example.cv.models.responses.ApiResponse;
-import org.example.cv.models.responses.UserResponse;
-import org.example.cv.services.UserService;
-import org.springframework.data.domain.Page;
-import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/users")
@@ -32,14 +35,27 @@ public class UserController {
      */
     @Operation(summary = "Create a new user", description = "Creates a new user with the provided details")
     @PostMapping("/create")
-    public ApiResponse<UserResponse> createUser(@RequestBody UserRequest userRequest) {
+    public ApiResponse<UserResponse> createUser(@RequestBody @Valid UserRequest userRequest) {
         log.info("Received request to create user: {}", userRequest.getUsername());
         UserResponse userResponse = userService.createUser(userRequest);
         log.info("User created successfully: {}", userResponse.getId());
         return ApiResponse.<UserResponse>builder().result(userResponse).build();
     }
 
-    //UserResponse getUserById(Long id);
+    /**
+     * Get current logged-in user info
+     * Endpoint to retrieve the current authenticated user's details.
+     */
+    @Operation(summary = "Get current user info", description = "Retrieves the current authenticated user's details")
+    @GetMapping("/myInfo")
+    public ApiResponse<UserResponse> getMyInfo() {
+        log.info("Received request to get current user info");
+        UserResponse userResponse = userService.getMyInfo();
+        log.info("Current user retrieved successfully: {}", userResponse.getUsername());
+        return ApiResponse.<UserResponse>builder().result(userResponse).build();
+    }
+
+    // UserResponse getUserById(Long id);
     /**
      * Get user by ID
      * Endpoint to retrieve user details by their ID.
@@ -59,7 +75,9 @@ public class UserController {
      * Get all users with pagination and filtering
      * Endpoint to retrieve a paginated list of users with optional search and sorting.
      */
-    @Operation(summary = "Get all users", description = "Retrieves a paginated list of users with optional search and sorting")
+    @Operation(
+            summary = "Get all users",
+            description = "Retrieves a paginated list of users with optional search and sorting")
     @GetMapping
     public ApiResponse<Page<UserResponse>> getAllUsers(
             @RequestParam(value = "page", defaultValue = "0") int page,
@@ -67,7 +85,13 @@ public class UserController {
             @RequestParam(value = "search", required = false) String search,
             @RequestParam(value = "sort", defaultValue = "id") String sort,
             @RequestParam(value = "direction", defaultValue = "asc") String direction) {
-        log.info("Received request to get all users: page={}, size={}, search={}, sort={}, direction={}", page, size, search, sort, direction);
+        log.info(
+                "Received request to get all users: page={}, size={}, search={}, sort={}, direction={}",
+                page,
+                size,
+                search,
+                sort,
+                direction);
         Page<UserResponse> usersPage = userService.getAllUsers(page, size, search, sort, direction);
         log.info("Users retrieved successfully: totalElements={}", usersPage.getTotalElements());
         return ApiResponse.<Page<UserResponse>>builder().result(usersPage).build();
@@ -81,7 +105,8 @@ public class UserController {
     @Operation(summary = "Update user details", description = "Updates the details of an existing user")
     @Parameter(name = "id", description = "ID of the user to update", required = true)
     @PutMapping("/{id}")
-    public ApiResponse<UserResponse> updateUser(@PathVariable("id") Long id, @RequestBody UserRequest userRequest) {
+    public ApiResponse<UserResponse> updateUser(
+            @PathVariable("id") Long id, @RequestBody @Valid UserRequest userRequest) {
         log.info("Received request to update user: {}", id);
         UserResponse userResponse = userService.updateUser(id, userRequest);
         log.info("User updated successfully: {}", userResponse.getUsername());
@@ -100,7 +125,9 @@ public class UserController {
         log.info("Received request to soft delete user: {}", id);
         userService.softdeleteUser(id);
         log.info("User soft deleted successfully: {}", id);
-        return ApiResponse.<String>builder().result("User soft deleted successfully").build();
+        return ApiResponse.<String>builder()
+                .result("User soft deleted successfully")
+                .build();
     }
 
     // UserResponse assignRoleToUser(Long userId, Long roleId);
@@ -110,7 +137,8 @@ public class UserController {
      */
     @Operation(summary = "Assign role to user", description = "Assigns a role to a user")
     @PostMapping("/{userId}/roles/{roleId}")
-    public ApiResponse<UserResponse> assignRoleToUser(@PathVariable("userId") Long userId, @PathVariable("roleId") Long roleId) {
+    public ApiResponse<UserResponse> assignRoleToUser(
+            @PathVariable("userId") Long userId, @PathVariable("roleId") String roleId) {
         log.info("Received request to assign role: {} to user: {}", roleId, userId);
         UserResponse userResponse = userService.assignRoleToUser(userId, roleId);
         log.info("Role assigned successfully to user: {}", userResponse.getUsername());
@@ -124,7 +152,8 @@ public class UserController {
      */
     @Operation(summary = "Remove role from user", description = "Removes a role from a user")
     @DeleteMapping("/{userId}/roles/{roleId}")
-    public ApiResponse<UserResponse> removeRoleFromUser(@PathVariable("userId") Long userId, @PathVariable("roleId") Long roleId) {
+    public ApiResponse<UserResponse> removeRoleFromUser(
+            @PathVariable("userId") Long userId, @PathVariable("roleId") String roleId) {
         log.info("Received request to remove role: {} from user: {}", roleId, userId);
         UserResponse userResponse = userService.removeRoleFromUser(userId, roleId);
         log.info("Role removed successfully from user: {}", userResponse.getUsername());
@@ -143,6 +172,23 @@ public class UserController {
         log.info("Received request to restore user: {}", id);
         userService.restoreUser(id);
         log.info("User restored successfully: {}", id);
-        return ApiResponse.<String>builder().result("User restored successfully").build();
+        return ApiResponse.<String>builder()
+                .result("User restored successfully")
+                .build();
+    }
+
+    // UserResponse getUserByUsername(String username);
+    /**
+     * Get user by username
+     * Endpoint to retrieve user details by their username.
+     */
+    @Operation(summary = "Get user by username", description = "Retrieves user details by their username")
+    @Parameter(name = "username", description = "Username of the user to retrieve", required = true)
+    @GetMapping("/username/{username}")
+    public ApiResponse<UserResponse> getUserByUsername(@PathVariable("username") String username) {
+        log.info("Received request to get user by username: {}", username);
+        UserResponse userResponse = userService.getUserByUsername(username);
+        log.info("User retrieved successfully: {}", userResponse.getUsername());
+        return ApiResponse.<UserResponse>builder().result(userResponse).build();
     }
 }

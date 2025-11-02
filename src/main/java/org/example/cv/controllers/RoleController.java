@@ -1,18 +1,21 @@
 package org.example.cv.controllers;
 
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.AccessLevel;
-import lombok.RequiredArgsConstructor;
-import lombok.experimental.FieldDefaults;
-import lombok.extern.slf4j.Slf4j;
+import java.util.List;
+
+import jakarta.validation.Valid;
+
 import org.example.cv.models.requests.RoleRequest;
 import org.example.cv.models.responses.ApiResponse;
 import org.example.cv.models.responses.RoleResponse;
 import org.example.cv.services.RoleService;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
+import lombok.extern.slf4j.Slf4j;
 
 @RestController
 @RequestMapping("/roles")
@@ -32,14 +35,14 @@ public class RoleController {
      */
     @Operation(summary = "Create a new role", description = "Creates a new role with the provided details.")
     @PostMapping
-    public ApiResponse<RoleResponse> createRole(@RequestBody RoleRequest request) {
+    public ApiResponse<RoleResponse> createRole(@RequestBody @Valid RoleRequest request) {
         log.info("Received request to create role: {}", request);
         RoleResponse roleResponse = roleService.createRole(request);
         log.info("Role created successfully: {}", roleResponse);
         return ApiResponse.<RoleResponse>builder().result(roleResponse).build();
     }
 
-    //List<RoleResponse> getAllRoles();
+    // List<RoleResponse> getAllRoles();
     /**
      * Retrieve all roles
      * @return
@@ -60,7 +63,7 @@ public class RoleController {
      */
     @Operation(summary = "Soft delete a role", description = "Soft deletes a role by its ID.")
     @DeleteMapping("/{id}")
-    public ApiResponse<Void> softdeleteRole(@PathVariable Long id) {
+    public ApiResponse<Void> softdeleteRole(@PathVariable String id) {
         log.info("Received request to soft delete role with ID: {}", id);
         roleService.softdeleteRole(id);
         log.info("Role with ID: {} has been soft deleted", id);

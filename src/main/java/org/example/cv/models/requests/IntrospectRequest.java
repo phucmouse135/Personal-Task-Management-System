@@ -1,7 +1,8 @@
 package org.example.cv.models.requests;
 
-import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
+
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -14,6 +15,9 @@ import lombok.experimental.FieldDefaults;
 public class IntrospectRequest {
 
     @NotNull(message = "Token must not be null")
-    @Schema(description = "The token to be introspected", example = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...", required = true)
+    @Schema(
+            description = "The token to be introspected",
+            example = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+            required = true)
     String token;
 }

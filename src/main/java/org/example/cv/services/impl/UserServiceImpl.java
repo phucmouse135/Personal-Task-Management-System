@@ -1,9 +1,11 @@
 package org.example.cv.services.impl;
 
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 import jakarta.transaction.Transactional;
-import lombok.RequiredArgsConstructor;
-import lombok.experimental.FieldDefaults;
-import lombok.extern.slf4j.Slf4j;
+
 import org.example.cv.exceptions.AppException;
 import org.example.cv.exceptions.ErrorCode;
 import org.example.cv.models.entities.RoleEntity;
@@ -14,16 +16,22 @@ import org.example.cv.repositories.RoleRepository;
 import org.example.cv.repositories.UserRepository;
 import org.example.cv.services.UserService;
 import org.example.cv.utils.mapper.UserMapper;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.access.prepost.PostAuthorize;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
@@ -34,18 +42,26 @@ public class UserServiceImpl implements UserService {
     UserMapper userMapper;
     RoleRepository roleRepository;
     PasswordEncoder passwordEncoder;
+
+    /**
+     * Create user
+     *
+     * @param userRequest
+     * @return
+     */
     @Override
     @Transactional
     public UserResponse createUser(UserRequest userRequest) {
         log.info("Creating user: {}", userRequest.getUsername());
-        if(userRepository.existsByUsername(userRequest.getUsername())){
+        if (userRepository.existsByUsername(userRequest.getUsername())) {
             throw new AppException(ErrorCode.USER_EXISTED);
         }
         UserEntity user = userMapper.toEntity(userRequest);
         user.setPassword(passwordEncoder.encode(userRequest.getPassword()));
         HashSet<RoleEntity> roles = new HashSet<>();
-        for(Long roleId : userRequest.getRoleIds()){
-            RoleEntity role = roleRepository.findById(roleId).orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_EXISTED));
+        for (String roleId : userRequest.getRoleIds()) {
+            RoleEntity role =
+                    roleRepository.findById(roleId).orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_EXISTED));
             roles.add(role);
         }
         user.setRoles(roles);
@@ -54,32 +70,76 @@ public class UserServiceImpl implements UserService {
         return userMapper.toResponse(user);
     }
 
+    /**
+     * Get user by id
+     *
+     * @param id
+     * @return
+     */
     @Override
+    @Cacheable(value = "users", key = "#id", cacheManager = "caffeineCacheManager")
+    @PostAuthorize("hasRole('ADMIN') or returnObject.username == authentication.name")
     public UserResponse getUserById(Long id) {
         log.info("Getting user by id: {}", id);
         UserEntity user = userRepository.findById(id).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
         return userMapper.toResponse(user);
     }
 
+    /**
+     * Get current authenticated user info
+     *
+     * @return
+     */
     @Override
+    public UserResponse getMyInfo() {
+        log.info("Getting current user info");
+        var context = SecurityContextHolder.getContext();
+        String username = context.getAuthentication().getName();
+        UserEntity user =
+                userRepository.findByUsername(username).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+        return userMapper.toResponse(user);
+    }
+
+    /**
+     * Get all users with pagination and search
+     *
+     * @param page
+     * @param size
+     * @param search
+     * @param sort
+     * @param direction
+     * @return
+     */
+    @Override
+    @PreAuthorize("hasRole('ADMIN')")
     public Page<UserResponse> getAllUsers(int page, int size, String search, String sort, String direction) {
         log.info("Getting all users");
         Pageable pageable = PageRequest.of(page, size).withSort(Sort.by(Sort.Direction.fromString(direction), sort));
         return userRepository.findAllByPaginationAndSearch(search, pageable).map(userMapper::toResponse);
     }
 
+    /**
+     * Update user
+     *
+     * @param id
+     * @param userRequest
+     * @return
+     */
     @Override
     @Transactional
+    @CachePut(value = "users", key = "#id", cacheManager = "caffeineCacheManager")
+    @PostAuthorize("hasRole('ADMIN') or returnObject.username == authentication.name")
     public UserResponse updateUser(Long id, UserRequest userRequest) {
         log.info("Updating user by id: {}", id);
         UserEntity user = userRepository.findById(id).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
         userMapper.updateEntityFromRequest(userRequest, user);
-        if(userRequest.getPassword() != null && !userRequest.getPassword().isEmpty()){
+        if (userRequest.getPassword() != null && !userRequest.getPassword().isEmpty()) {
             user.setPassword(passwordEncoder.encode(userRequest.getPassword()));
         }
         Set<RoleEntity> roles = new HashSet<>();
-        for(Long roleId : userRequest.getRoleIds()){
-            RoleEntity role = roleRepository.findById(roleId).orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_EXISTED));
+        for (String roleId : userRequest.getRoleIds()) {
+            RoleEntity role =
+                    roleRepository.findById(roleId).orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_EXISTED));
             roles.add(role);
         }
         user.setRoles(roles);
@@ -88,41 +148,82 @@ public class UserServiceImpl implements UserService {
         return userMapper.toResponse(user);
     }
 
+    /**
+     * Soft delete user by id
+     *
+     * @param id
+     */
     @Override
     @Transactional
+    @CacheEvict(value = "users", key = "#id", cacheManager = "caffeineCacheManager")
+    @PreAuthorize("hasRole('ADMIN') or @ownershipSecurity.isOwner(authentication, #id)")
     public void softdeleteUser(Long id) {
         log.info("Soft deleting user by id: {}", id);
         userRepository.softDeleteByIds(List.of(id));
     }
 
+    /**
+     * Assign role to user
+     *
+     * @param userId
+     * @param roleId
+     * @return
+     */
     @Override
     @Transactional
-    public UserResponse assignRoleToUser(Long userId, Long roleId) {
+    @PreAuthorize("hasRole('ADMIN')")
+    public UserResponse assignRoleToUser(Long userId, String roleId) {
         log.info("Assigning role {} to user {}", roleId, userId);
-        UserEntity user = userRepository.findById(userId).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
-        RoleEntity role = roleRepository.findById(roleId).orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_EXISTED));
+        UserEntity user =
+                userRepository.findById(userId).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+        RoleEntity role =
+                roleRepository.findById(roleId).orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_EXISTED));
         user.getRoles().add(role);
         user = userRepository.save(user);
         log.info("Assigned role {} to user {}", roleId, userId);
         return userMapper.toResponse(user);
     }
 
+    /**
+     * Remove role from user
+     *
+     * @param userId
+     * @param roleId
+     * @return
+     */
     @Override
     @Transactional
-    public UserResponse removeRoleFromUser(Long userId, Long roleId) {
+    @PreAuthorize("hasRole('ADMIN')")
+    public UserResponse removeRoleFromUser(Long userId, String roleId) {
         log.info("Removing role {} from user {}", roleId, userId);
-        UserEntity user = userRepository.findById(userId).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
-        RoleEntity role = roleRepository.findById(roleId).orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_EXISTED));
+        UserEntity user =
+                userRepository.findById(userId).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+        RoleEntity role =
+                roleRepository.findById(roleId).orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_EXISTED));
         user.getRoles().remove(role);
         user = userRepository.save(user);
         log.info("Removed role {} from user {}", roleId, userId);
         return userMapper.toResponse(user);
     }
 
+    /**
+     * Restore user by id
+     *
+     * @param id
+     */
     @Override
     @Transactional
+    @PreAuthorize("hasRole('ADMIN') or @ownershipSecurity.isOwner(authentication, #id)")
     public void restoreUser(Long id) {
         log.info("Restoring user by id: {}", id);
         userRepository.restoreById(id);
+    }
+
+    @Override
+    public UserResponse getUserByUsername(String username) {
+        log.info("Getting user by username: {}", username);
+        UserEntity user =
+                userRepository.findByUsername(username).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+        return userMapper.toResponse(user);
     }
 }

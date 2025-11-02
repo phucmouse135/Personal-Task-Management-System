@@ -1,14 +1,18 @@
 package org.example.cv.models.entities;
 
-import jakarta.persistence.*;
-import jakarta.validation.constraints.*;
-import lombok.*;
-import lombok.experimental.FieldDefaults;
-import org.example.cv.models.entities.base.BaseEntity;
-import io.swagger.v3.oas.annotations.media.Schema;
-
 import java.util.Set;
 
+import jakarta.persistence.*;
+import jakarta.validation.constraints.*;
+
+import org.example.cv.models.entities.base.BaseEntity;
+import org.example.cv.utils.userSecurity.Ownable;
+
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.*;
+import lombok.experimental.FieldDefaults;
+
+@EqualsAndHashCode(callSuper = false)
 @Getter
 @Setter
 @Builder
@@ -20,11 +24,8 @@ import java.util.Set;
 @Schema(name = "UserEntity", description = "Entity representing a user")
 @NamedEntityGraph(
         name = "UserEntity.roles",
-        attributeNodes = {
-                @NamedAttributeNode("roles")
-        }
-)
-public class UserEntity extends BaseEntity {
+        attributeNodes = {@NamedAttributeNode("roles")})
+public class UserEntity extends BaseEntity implements Ownable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Schema(description = "Unique identifier of the user", example = "1")
@@ -59,6 +60,14 @@ public class UserEntity extends BaseEntity {
     String email;
 
     @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "users_roles",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "role_name"))
     Set<RoleEntity> roles;
 
+    @Override
+    public UserEntity getOwner() {
+        return this;
+    }
 }
