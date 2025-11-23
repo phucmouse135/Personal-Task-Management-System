@@ -25,7 +25,7 @@ public class RoleRequest {
             max = 50,
             message = "Role name must not exceed 50 characters",
             groups = {OnCreate.class, OnUpdate.class})
-    @Schema(description = "Name of the role", example = "ADMIN", maxLength = 50, required = true)
+    @Schema(description = "Name of the role", example = "ADMIN", maxLength = 50)
     String name;
 
     @Size(

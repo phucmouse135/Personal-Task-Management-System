@@ -29,6 +29,7 @@ public enum ErrorCode {
     USER_NOT_PROJECT_MEMBER(1014, "User is not a member of the project", HttpStatus.BAD_REQUEST),
     INVALID_TASK_STATUS_TRANSITION(1013, "Invalid task status transition from {from} to {to}", HttpStatus.BAD_REQUEST),
     REPOSITORY_NOT_FOUND(1020, "Repository not found for the given entity", HttpStatus.INTERNAL_SERVER_ERROR),
+    INVALID_ENTITY(1021, "Invalid entity provided", HttpStatus.BAD_REQUEST),
     PROJECT_NOT_EXISTED(1010, "Project not existed", HttpStatus.NOT_FOUND);
 
     ErrorCode(int code, String message, HttpStatusCode statusCode) {

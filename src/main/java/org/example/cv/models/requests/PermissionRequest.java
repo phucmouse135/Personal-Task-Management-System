@@ -25,7 +25,7 @@ public class PermissionRequest {
             max = 50,
             message = "Permission name must not exceed 50 characters",
             groups = {OnCreate.class, OnUpdate.class})
-    @Schema(description = "Name of the permission", example = "READ_PRIVILEGES", maxLength = 50, required = true)
+    @Schema(description = "Name of the permission", example = "READ_PRIVILEGES", maxLength = 50)
     String name;
 
     @Size(

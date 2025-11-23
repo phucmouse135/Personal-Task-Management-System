@@ -1,7 +1,5 @@
 package org.example.cv.exceptions;
 
-import java.util.Map;
-
 import org.example.cv.models.responses.ApiResponse;
 import org.springframework.expression.ParseException;
 import org.springframework.http.HttpStatus;
@@ -18,8 +16,6 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class GlobalExceptionHandler {
 
-    private static final String MIN_ATTRIBUTE = "min";
-
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<ApiResponse<Void>> handlingRuntimeException(RuntimeException ex) {
         ApiResponse<Void> response = ApiResponse.<Void>builder()
@@ -30,9 +26,9 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(value = AppException.class)
-    ResponseEntity<ApiResponse> handlingAppException(AppException exception) {
+    ResponseEntity<ApiResponse<?>> handlingAppException(AppException exception) {
         ErrorCode errorCode = exception.getErrorCode();
-        ApiResponse apiResponse = new ApiResponse();
+        ApiResponse<?> apiResponse = new ApiResponse<>();
 
         apiResponse.setCode(errorCode.getCode());
         apiResponse.setMessage(errorCode.getMessage());
@@ -41,7 +37,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(value = AccessDeniedException.class)
-    ResponseEntity<ApiResponse> handlingAccessDeniedException(AccessDeniedException exception) {
+    ResponseEntity<ApiResponse<?>> handlingAccessDeniedException(AccessDeniedException exception) {
         ErrorCode errorCode = ErrorCode.UNAUTHORIZED;
 
         return ResponseEntity.status(errorCode.getStatusCode())
@@ -49,12 +45,6 @@ public class GlobalExceptionHandler {
                         .code(errorCode.getCode())
                         .message(errorCode.getMessage())
                         .build());
-    }
-
-    private String mapAttribute(String message, Map<String, Object> attributes) {
-        String minValue = String.valueOf(attributes.get(MIN_ATTRIBUTE));
-
-        return message.replace("{" + MIN_ATTRIBUTE + "}", minValue);
     }
 
     @ExceptionHandler({ParseException.class, JOSEException.class})

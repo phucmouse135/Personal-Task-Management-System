@@ -6,13 +6,9 @@ public class AppException extends RuntimeException {
         this.errorCode = errorCode;
     }
 
-    private ErrorCode errorCode;
+    private final ErrorCode errorCode;
 
     public ErrorCode getErrorCode() {
         return errorCode;
-    }
-
-    public void setErrorCode(ErrorCode errorCode) {
-        this.errorCode = errorCode;
     }
 }

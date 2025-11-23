@@ -7,7 +7,7 @@ import jakarta.persistence.*;
 import org.example.cv.event.AuditLogListener;
 import org.example.cv.event.Auditable;
 import org.example.cv.models.entities.base.BaseEntity;
-import org.example.cv.utils.userSecurity.Ownable;
+import org.example.cv.utils.security.Ownable;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;

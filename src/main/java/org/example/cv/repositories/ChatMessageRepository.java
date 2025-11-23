@@ -18,28 +18,32 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessageEntity, 
     // Lấy lịch sử chat riêng giữa 2 người
     @Query(
             """
-		SELECT m FROM ChatMessageEntity m
-		WHERE (m.sender.id = :user1Id AND m.receiver.id = :user2Id)
-		OR (m.sender.id = :user2Id AND m.receiver.id = :user1Id)
-				ORDER BY m.createdAt ASC
-		""")
+                SELECT m
+                FROM ChatMessageEntity m
+                WHERE (m.sender.id = :user1Id AND m.receiver.id = :user2Id)
+                   OR (m.sender.id = :user2Id AND m.receiver.id = :user1Id)
+                ORDER BY m.createdAt ASC
+            """
+    )
+
     List<ChatMessageEntity> findPrivateChatHistory(
             @Param("user1Id") Long user1Id, @Param("user2Id") Long user2Id, Pageable pageable);
 
     // Lấy danh sách người dùng đã chat với user hiện tại
     @Query(
             """
-		SELECT DISTINCT u
-		FROM UserEntity u
-		WHERE u.id IN (
-			SELECT DISTINCT CASE
-				WHEN m.sender.id = :userId THEN m.receiver.id
-				ELSE m.sender.id
-			END
-			FROM ChatMessageEntity m
-			WHERE m.sender.id = :userId OR m.receiver.id = :userId
-		)
-		""")
+                SELECT DISTINCT u
+                FROM UserEntity u
+                WHERE u.id IN (
+                    SELECT DISTINCT CASE
+                        WHEN m.sender.id = :userId THEN m.receiver.id
+                        ELSE m.sender.id
+                    END
+                    FROM ChatMessageEntity m
+                    WHERE m.sender.id = :userId OR m.receiver.id = :userId
+                )
+                """
+    )
     List<UserEntity> findConversationUsers(@Param("userId") Long userId);
 
     // Lấy tin nhắn cuối cùng giữa 2 user

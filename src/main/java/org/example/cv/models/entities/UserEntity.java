@@ -6,7 +6,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 
 import org.example.cv.models.entities.base.BaseEntity;
-import org.example.cv.utils.userSecurity.Ownable;
+import org.example.cv.utils.security.Ownable;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;

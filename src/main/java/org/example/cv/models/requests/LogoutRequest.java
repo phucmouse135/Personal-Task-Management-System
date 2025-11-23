@@ -22,7 +22,6 @@ public class LogoutRequest {
             groups = {OnCreate.class, OnUpdate.class})
     @Schema(
             description = "The token to be invalidated during logout",
-            example = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-            required = true)
+            example = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...")
     String token;
 }

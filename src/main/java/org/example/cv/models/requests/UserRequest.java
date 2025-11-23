@@ -26,7 +26,7 @@ public class UserRequest {
             max = 50,
             message = "Username must not exceed 50 characters",
             groups = {OnCreate.class, OnUpdate.class})
-    @Schema(description = "Unique username of the user", example = "john_doe", maxLength = 50, required = true)
+    @Schema(description = "Unique username of the user", example = "john_doe", maxLength = 50)
     String username;
 
     @NotBlank(
@@ -36,7 +36,7 @@ public class UserRequest {
             max = 100,
             message = "Password must not exceed 100 characters",
             groups = {OnCreate.class})
-    @Schema(description = "Password of the user", example = "securePassword123", maxLength = 100, required = true)
+    @Schema(description = "Password of the user", example = "securePassword123", maxLength = 100)
     String password;
 
     @Size(
@@ -59,7 +59,7 @@ public class UserRequest {
     @Email(
             message = "Email should be valid",
             groups = {OnCreate.class, OnUpdate.class})
-    @Schema(description = "Email address of the user", example = "john.doe@example.com", required = true)
+    @Schema(description = "Email address of the user", example = "john.doe@example.com")
     String email;
 
     @Schema(description = "Set of role IDs associated with the user", example = "[1, 2, 3]")

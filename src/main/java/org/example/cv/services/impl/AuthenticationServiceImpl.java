@@ -50,9 +50,8 @@ import lombok.extern.slf4j.Slf4j;
 public class AuthenticationServiceImpl implements AuthenticationService {
     UserRepository userRepository;
     InvalidedTokenRepository invalidedTokenRepository;
-    OutboundUserClient outboundUserClient;
-    OutboundIdentityClient outboundIdentityClient;
     EmailService emailService;
+    static String EMAIL = "email";
 
     @NonFinal
     @Value("${outbound.google.client-id}")
@@ -89,16 +88,16 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         var userInfo = oAuth2User.getAttributes();
         log.info("User info: {}", userInfo);
 
-        var user = userRepository.findByUsername((String) userInfo.get("email")).orElseGet(() -> {
+        var user = userRepository.findByUsername((String) userInfo.get(EMAIL)).orElseGet(() -> {
             log.info("User not found, creating new user");
             HashSet<RoleEntity> roles = new HashSet<>();
             roles.add(RoleEntity.builder().name("USER").build());
             String password = UUID.randomUUID().toString();
             var newUser = UserEntity.builder()
-                    .username((String) userInfo.get("email"))
+                    .username((String) userInfo.get(EMAIL))
                     .password(passwordEncoder.encode(password)) // No password for OAuth2 users
                     .roles(roles)
-                    .email((String) userInfo.get("email"))
+                    .email((String) userInfo.get(EMAIL))
                     .build();
             var savedUser = userRepository.save(newUser);
             try {
@@ -262,14 +261,13 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             GoogleIdToken.Payload payload = idToken.getPayload();
             String email = payload.getEmail();
             String name = (String) payload.get("name");
-            String googleId = payload.getSubject();
 
             log.info("Google user authenticated: email={}, name={}", email, name);
 
             // Find or create user
             UserEntity user = userRepository.findByEmail(email).orElseGet(() -> {
                 try {
-                    return createGoogleUser(email, name, googleId);
+                    return createGoogleUser(email, name);
                 } catch (MessagingException e) {
                     log.error("Failed to create user from Google account", e);
                     throw new AppException(ErrorCode.EMAIL_SENDING_FAILED);
@@ -290,10 +288,9 @@ public class AuthenticationServiceImpl implements AuthenticationService {
      * Create new user from Google account
      * @param email User email from Google
      * @param name User full name from Google
-     * @param googleId Google user ID
      * @return Created user entity
      */
-    private UserEntity createGoogleUser(String email, String name, String googleId) throws MessagingException {
+    private UserEntity createGoogleUser(String email, String name) throws MessagingException {
         log.info("Creating new user from Google account: {}", email);
 
         UserEntity newUser = new UserEntity();

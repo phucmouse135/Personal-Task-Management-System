@@ -1,6 +1,6 @@
 package org.example.cv.controllers;
 
-import org.example.cv.models.responses.AnalyticsSummaryResponse;
+import org.example.cv.models.responses.*;
 import org.example.cv.services.AnalyticsService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -8,6 +8,8 @@ import org.springframework.web.bind.annotation.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/analytics")
@@ -26,31 +28,31 @@ public class AnalyticsController {
 
     @Operation(summary = "Lấy thống kê task theo status")
     @GetMapping("/tasks-by-status")
-    public ResponseEntity<?> getTasksByStatus() {
+    public ResponseEntity<List<TaskStatusCountResponse>> getTasksByStatus() {
         return ResponseEntity.ok(analyticsService.getTasksByStatus());
     }
 
     @Operation(summary = "Lấy thống kê task theo priority")
     @GetMapping("/tasks-by-priority")
-    public ResponseEntity<?> getTasksByPriority() {
+    public ResponseEntity<List<TaskPriorityCountResponse>> getTasksByPriority() {
         return ResponseEntity.ok(analyticsService.getTasksByPriority());
     }
 
     @Operation(summary = "Lấy thống kê task theo project")
     @GetMapping("/tasks-by-project")
-    public ResponseEntity<?> getTasksByProject() {
+    public ResponseEntity<List<TaskProjectCountResponse>> getTasksByProject() {
         return ResponseEntity.ok(analyticsService.getTasksByProject());
     }
 
     @Operation(summary = "Lấy xu hướng task theo ngày")
     @GetMapping("/tasks-trend")
-    public ResponseEntity<?> getTasksTrend(@RequestParam(defaultValue = "7") int days) {
+    public ResponseEntity<List<TaskTrendResponse>> getTasksTrend(@RequestParam(defaultValue = "7") int days) {
         return ResponseEntity.ok(analyticsService.getTasksTrend(days));
     }
 
     @Operation(summary = "Lấy thống kê project")
     @GetMapping("/projects-summary")
-    public ResponseEntity<?> getProjectsSummary() {
+    public ResponseEntity<Object> getProjectsSummary() {
         return ResponseEntity.ok(analyticsService.getProjectsSummary());
     }
 }

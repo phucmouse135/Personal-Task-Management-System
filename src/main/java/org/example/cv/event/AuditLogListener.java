@@ -12,6 +12,8 @@ import java.util.stream.Collectors;
 import jakarta.persistence.*;
 import jakarta.servlet.http.HttpServletRequest;
 
+import org.example.cv.exceptions.AppException;
+import org.example.cv.exceptions.ErrorCode;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
@@ -49,20 +51,23 @@ public class AuditLogListener {
             return;
         }
         if (object instanceof Auditable entity) {
-            HttpServletRequest request =
-                    ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
+            HttpServletRequest request = getCurrentHttpRequest();
+            if(request == null) {
+                return;
+            }
             request.setAttribute("entityId", entity.getId());
         }
     }
 
     @PreUpdate
     public void preUpdate(Object object) {
-        if (entityManagerFactory == null) {
-            return;
-        }
         if (object instanceof Auditable entity) {
-            Object oldEntity = entityManagerFactory.createEntityManager().find(object.getClass(), entity.getId());
-            logEvent("UPDATE", entity, oldEntity, object);
+            try(var em = entityManagerFactory.createEntityManager()) {
+                Object oldEntity = em.find(object.getClass(), entity.getId());
+                logEvent("UPDATE", entity, oldEntity, object);
+            } catch (Exception e) {
+                log.error("Error fetching old entity state for audit log", e);
+            }
         }
     }
 
@@ -82,22 +87,7 @@ public class AuditLogListener {
                 .filter(m -> m.getParameterCount() == 0)
                 .filter(m -> !m.getName().equals("getId") && !m.getName().equals("getClass"))
                 .filter(m -> m.getReturnType().getPackageName().startsWith("java"))
-                .peek(m -> m.setAccessible(true))
-                .collect(Collectors.toList()));
-    }
-
-    private Long getEntityId(Object entity) throws RuntimeException {
-        Method getid = null;
-        try {
-            getid = entity.getClass().getMethod("getId");
-        } catch (NoSuchMethodException e) {
-            throw new RuntimeException(e);
-        }
-        try {
-            return (Long) getid.invoke(entity);
-        } catch (IllegalAccessException | InvocationTargetException e) {
-            throw new RuntimeException(e);
-        }
+                .toList());
     }
 
     private String generateChangeDetails(Object oldEntity, Object newEntity) {
@@ -131,12 +121,17 @@ public class AuditLogListener {
     }
 
     protected void logEvent(String actionType, Auditable entity, Object oldEntity, Object newEntity) {
-        HttpServletRequest request =
-                ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
+        HttpServletRequest request = getCurrentHttpRequest();
         String details = generateChangeDetails(oldEntity, newEntity);
+        assert request != null;
         request.setAttribute("details", details);
         request.setAttribute("action", actionType);
         request.setAttribute("entityId", entity.getId());
         request.setAttribute("entityType", entity.getEntityType());
+    }
+
+    private HttpServletRequest getCurrentHttpRequest() {
+        ServletRequestAttributes attrs = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+        return attrs != null ? attrs.getRequest() : null;
     }
 }

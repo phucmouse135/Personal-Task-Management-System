@@ -2,7 +2,6 @@ package org.example.cv.services.impl;
 
 import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -65,9 +64,7 @@ public class AnalyticsServiceImpl implements AnalyticsService {
                 .filter(t -> t.getUpdatedAt() != null)
                 .filter(t -> t.getUpdatedAt().isAfter(startOfMonthInstant))
                 .count();
-        long totalProjects = allProjects.size();
-        // All projects are considered active since there's no endDate field
-        long activeProjects = totalProjects;
+        long activeProjects = allProjects.size();
 
         double completionRate = totalTasks > 0 ? (double) completedTasks / totalTasks * 100 : 0.0;
 
@@ -79,7 +76,7 @@ public class AnalyticsServiceImpl implements AnalyticsService {
                 .cancelledTasks(cancelledTasks)
                 .overdueTasks(overdueTasks)
                 .completedThisMonth(completedThisMonth)
-                .totalProjects(totalProjects)
+                .totalProjects(activeProjects)
                 .activeProjects(activeProjects)
                 .completionRate(Math.round(completionRate * 100.0) / 100.0)
                 .build();
@@ -99,7 +96,7 @@ public class AnalyticsServiceImpl implements AnalyticsService {
                         .status(entry.getKey().name())
                         .count(entry.getValue())
                         .build())
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
@@ -119,7 +116,7 @@ public class AnalyticsServiceImpl implements AnalyticsService {
                         .build())
                 .sorted(Comparator.comparing(TaskPriorityCountResponse::getCount)
                         .reversed())
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
@@ -143,7 +140,7 @@ public class AnalyticsServiceImpl implements AnalyticsService {
                 })
                 .sorted(Comparator.comparing(TaskProjectCountResponse::getCount).reversed())
                 .limit(10)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
@@ -191,21 +188,9 @@ public class AnalyticsServiceImpl implements AnalyticsService {
         log.info("Getting projects summary");
 
         List<ProjectEntity> allProjects = projectRepository.findAll();
-        LocalDateTime now = LocalDateTime.now();
 
         Map<String, Object> summary = new HashMap<>();
         summary.put("total", allProjects.size());
-        //        summary.put(
-        //                "active",
-        //                allProjects.stream()
-        //                        .filter(p -> p.getEndDate() == null || p.getEndDate().isAfter(now))
-        //                        .count());
-        //        summary.put(
-        //                "completed",
-        //                allProjects.stream()
-        //                        .filter(p -> p.getEndDate() != null && p.getEndDate().isBefore(now))
-        //                        .count());
-
         return summary;
     }
 }

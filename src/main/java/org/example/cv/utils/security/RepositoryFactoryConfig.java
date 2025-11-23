@@ -1,4 +1,4 @@
-package org.example.cv.utils.userSecurity;
+package org.example.cv.utils.security;
 
 import java.util.HashMap;
 import java.util.Map;
