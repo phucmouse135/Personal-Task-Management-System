@@ -19,6 +19,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionalEventListener;
 
 import lombok.RequiredArgsConstructor;
@@ -37,8 +38,7 @@ public class NotificationServiceImpl implements NotificationService {
      * và xử lý một cách bất đồng bộ.
      */
     @Async
-    @EventListener(TaskEvent.class)
-    @TransactionalEventListener // Chỉ chạy nếu transaction của TaskService (POST/PUT) thành
+    @TransactionalEventListener
     public void handleTaskEvent(TaskEvent event) {
         log.info(
                 "Nhận TaskEvent: {} cho task ID {}",
@@ -65,14 +65,12 @@ public class NotificationServiceImpl implements NotificationService {
 
         // TODO: Gửi real-time notification qua WebSocket
         NotificationResponse response = notificationMapper.toResponse(notification);
-        String destination = "user/" + recipient.getId() + "/queue/notifications";
-        simpMessagingTemplate.convertAndSend(destination, response);
-        log.info("Đã gửi real-time notification đến {}", destination);
+        simpMessagingTemplate.convertAndSendToUser(recipient.getUsername(),"/queue/notification", response);
+        log.info("Đã gửi real-time notification đến {}", recipient.getUsername());
     }
 
     @Async
     @TransactionalEventListener
-    @EventListener(PaymentSuccessEvent.class)
     public void handlePaymentSuccessEvent(PaymentSuccessEvent event) {
         log.info(
                 "Nhận PaymentSuccessEvent cho user ID {}",
@@ -90,9 +88,8 @@ public class NotificationServiceImpl implements NotificationService {
         notificationRepository.save(notification);
         log.info("Đã tạo thông báo thanh toán cho user {}", recipient.getId());
         NotificationResponse response = notificationMapper.toResponse(notification);
-        String destination = "user/" + recipient.getId() + "/queue/notifications";
-        simpMessagingTemplate.convertAndSend(destination, response);
-        log.info("Đã gửi real-time notification đến {}", destination);
+        simpMessagingTemplate.convertAndSendToUser(recipient.getUsername(),"/queue/notification", response);
+        log.info("Đã gửi real-time notification đến {}", recipient.getUsername());
     }
 
     private String buildMessage(TaskEntity task, UserEntity actor, NotificationType type) {
@@ -121,6 +118,7 @@ public class NotificationServiceImpl implements NotificationService {
                 notifications.isLast());
     }
 
+    @Transactional
     @Override
     public void markAsRead(Long notificationId, Long userId) {
         NotificationEntity notification = notificationRepository
@@ -136,6 +134,7 @@ public class NotificationServiceImpl implements NotificationService {
         log.info("Notification {} marked as read by user {}", notificationId, userId);
     }
 
+    @Transactional
     @Override
     public void markAllAsReadForUser(Long userId) {
         log.info("Đánh dấu tất cả thông báo là đã đọc cho user {}", userId);

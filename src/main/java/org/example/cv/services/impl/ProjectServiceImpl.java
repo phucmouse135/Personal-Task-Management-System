@@ -132,12 +132,11 @@ public class ProjectServiceImpl implements ProjectService {
             cacheManager = "redisCacheManager")
     @PostAuthorize("hasRole('ADMIN') or returnObject.owner.username == authentication.name")
     public ProjectResponse update(Long id, ProjectRequest request) {
-        UserEntity owner = userRepository
-                .findById(Objects.requireNonNull(AuthenticationUtils.getCurrentUserId()))
-                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+        if(!userRepository.existsById(id)) {
+            throw new AppException(ErrorCode.USER_NOT_EXISTED);
+        }
         var project = projectRepository.findById(id).orElseThrow(() -> new AppException(ErrorCode.PROJECT_NOT_EXISTED));
         projectMapper.updateEntityFromRequest(request, project);
-        project.setOwner(owner);
         project.setEndDate(request.getEndDate() != null ? Instant.parse(request.getEndDate()) : null);
         return projectMapper.toResponse(projectRepository.save(project));
     }
@@ -204,6 +203,7 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
+    @PreAuthorize("hasRole('ADMIN') or @ownershipSecurity.isOwner(#ownerId, authentication)")
     public ProjectResponse addMember(Long projectId, Long userId) {
         log.info("Adding member {} to project {}", userId, projectId);
         ProjectEntity project = projectRepository
@@ -217,6 +217,7 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
+    @PreAuthorize("hasRole('ADMIN') or @ownershipSecurity.isOwner(#ownerId, authentication)")
     public ProjectResponse removeMember(Long projectId, Long userId) {
         log.info("Removing member {} from project {}", userId, projectId);
         var project = projectRepository
@@ -229,6 +230,7 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
+    @PreAuthorize("hasRole('ADMIN') or @ownershipSecurity.isOwner(#ownerId, authentication)")
     public ProjectResponse changeOwner(Long projectId, Long newOwnerId) {
         log.info("Changing owner of project {} to {}", projectId, newOwnerId);
         var project = projectRepository

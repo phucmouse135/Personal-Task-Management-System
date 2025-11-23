@@ -2,6 +2,7 @@ package org.example.cv.models.requests; // UpdateTaskRequest.java
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Set;
 
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotBlank;
@@ -22,6 +23,6 @@ public record UpdateTaskRequest(
         @Schema(description = "Hạn chót mới", example = "2025-12-01T18:00:00")
                 @Future(message = "Deadline phải ở tương lai")
                 Instant deadline,
-        @Schema(description = "ID của nhung người được gán mới", example = "[1,2]") @NotNull List<Long> assignees
+        @Schema(description = "ID của nhung người được gán mới", example = "[1,2]") @NotNull Set<Long> assignees
         // Lưu ý: Thường thì projectId không được phép thay đổi khi update
         ) {}

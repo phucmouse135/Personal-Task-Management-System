@@ -25,7 +25,7 @@ public interface TaskService {
 
     void restoreTask(Long id);
 
-    PageResponse<TaskResponse> getAllMySoftDeletedTasks(int page, int size);
+    PageResponse<TaskResponse> getAllMySoftDeletedTasks(Pageable pageable);
 
-    PageResponse<TaskResponse> getAllSoftDeletedTasks(int page, int size);
+    PageResponse<TaskResponse> getAllSoftDeletedTasks(Pageable pageable);
 }

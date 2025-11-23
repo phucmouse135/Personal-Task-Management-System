@@ -24,6 +24,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
@@ -49,22 +50,13 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     UserRepository userRepository;
     InvalidedTokenRepository invalidedTokenRepository;
     EmailService emailService;
+    PasswordEncoder passwordEncoder;
     static String EMAIL = "email";
 
     @NonFinal
     @Value("${outbound.google.client-id}")
     protected String CLIENT_ID;
 
-    @NonFinal
-    @Value("${outbound.google.client-secret}")
-    protected String CLIENT_SECRET;
-
-    @NonFinal
-    @Value("${outbound.google.redirect-uri}")
-    protected String REDIRECT_URI;
-
-    @NonFinal
-    protected final String GRANT_TYPE = "authorization_code";
 
     @NonFinal
     @Value("${jwt.secret}")
@@ -81,8 +73,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
      * @return
      */
     @Override
-    public AuthenticationResponse outboundAuthenticate(OAuth2User oAuth2User) {
-        PasswordEncoder passwordEncoder = new BCryptPasswordEncoder(10);
+    public AuthenticationResponse outboundAuthenticate(OAuth2User oAuth2User){
         var userInfo = oAuth2User.getAttributes();
         log.info("User info: {}", userInfo);
 
@@ -143,7 +134,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
      */
     @Override
     public AuthenticationResponse authenticate(AuthenticationRequest request) {
-        PasswordEncoder passwordEncoder = new BCryptPasswordEncoder(10);
         log.info("Authenticating user: {}", request.getUsername());
         UserEntity user = userRepository
                 .findByUsername(request.getUsername())
@@ -158,12 +148,21 @@ public class AuthenticationServiceImpl implements AuthenticationService {
      * Logout user by invalidating token
      * @param request
      */
+    @Transactional
     @Override
-    public void logout(LogoutRequest request) throws ParseException, JOSEException {
-        var signToken = verifyToken(request.getToken());
+    public void logout(LogoutRequest request)  {
+        String jit = null;
+        Date expiryTime = null;
+        try{
+            var signToken = verifyToken(request.getToken());
 
-        String jit = signToken.getJWTClaimsSet().getJWTID();
-        Date expiryTime = signToken.getJWTClaimsSet().getExpirationTime();
+            jit = signToken.getJWTClaimsSet().getJWTID();
+            expiryTime = signToken.getJWTClaimsSet().getExpirationTime();
+        }
+        catch (Exception e){
+            log.error("Invalid token during logout", e);
+            throw new AppException(ErrorCode.UNAUTHENTICATED);
+        }
 
         InvalidatedToken invalidatedToken =
                 InvalidatedToken.builder().id(jit).expiryTime(expiryTime).build();
@@ -176,6 +175,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
      * @param request
      * @return
      */
+    @Transactional
     @Override
     public AuthenticationResponse refreshToken(RefreshRequest request) throws ParseException, JOSEException {
         log.info("Refreshing token");
@@ -206,7 +206,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
         Date issueTime = new Date();
         Date expiryTime = new Date(Instant.ofEpochMilli(issueTime.getTime())
-                .plus(1, ChronoUnit.HOURS)
+                .plus(jwtExpiration, ChronoUnit.SECONDS) // Expiration time in hours
                 .toEpochMilli());
 
         JWTClaimsSet claimsSet = new JWTClaimsSet.Builder()
@@ -237,6 +237,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
      * @param request containing Google ID token from frontend
      * @return AuthenticationResponse with JWT token
      */
+    @Transactional
     @Override
     public AuthenticationResponse authenticateWithGoogle(GoogleLoginRequest request) {
         try {

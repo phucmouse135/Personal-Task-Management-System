@@ -70,7 +70,7 @@ public class AuthenticationController {
      */
     @Operation(summary = "Logout", description = "Log out a user by invalidating their token")
     @PostMapping("/logout")
-    ApiResponse<Void> logout(@RequestBody @Valid LogoutRequest request) throws ParseException, JOSEException {
+    ApiResponse<Void> logout(@RequestBody @Valid LogoutRequest request) {
         authenticationService.logout(request);
         return ApiResponse.<Void>builder().build();
     }
@@ -82,7 +82,7 @@ public class AuthenticationController {
      * @return ApiResponse containing the authentication token
      */
     @Operation(summary = "Authenticate", description = "Authenticate a user and generate an authentication token")
-    @PostMapping(value = "/login", consumes = "application/json", produces = "application/json")
+    @PostMapping(value = "/login")
     ApiResponse<AuthenticationResponse> authenticate(@RequestBody @Valid AuthenticationRequest request) {
         var result = authenticationService.authenticate(request);
         return ApiResponse.<AuthenticationResponse>builder().result(result).build();

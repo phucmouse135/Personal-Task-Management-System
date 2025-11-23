@@ -3,6 +3,7 @@ package org.example.cv.services;
 import org.example.cv.models.requests.UserRequest;
 import org.example.cv.models.responses.UserResponse;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -13,7 +14,7 @@ public interface UserService {
 
     UserResponse getUserById(Long id);
 
-    Page<UserResponse> getAllUsers(int page, int size, String search, String sort, String direction);
+    Page<UserResponse> getAllUsers(String search , Pageable pageable);
 
     UserResponse updateUser(Long id, UserRequest userRequest);
 

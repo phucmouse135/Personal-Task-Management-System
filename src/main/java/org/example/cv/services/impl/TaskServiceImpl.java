@@ -29,7 +29,6 @@ import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -51,61 +50,32 @@ public class TaskServiceImpl implements TaskService {
     private final TaskMapper taskMapper;
     private final ApplicationEventPublisher eventPublisher;
 
-    // Business Logic: Định nghĩa các bước chuyển trạng thái hợp lệ
     private static final Map<TaskStatus, Set<TaskStatus>> VALID_TRANSITIONS = Map.of(
             TaskStatus.TODO, EnumSet.of(TaskStatus.IN_PROGRESS, TaskStatus.CANCELLED),
             TaskStatus.IN_PROGRESS, EnumSet.of(TaskStatus.DONE, TaskStatus.CANCELLED, TaskStatus.TODO),
-            TaskStatus.DONE, EnumSet.of(TaskStatus.IN_PROGRESS), // Cho phép reopen
-            TaskStatus.CANCELLED, EnumSet.noneOf(TaskStatus.class) // Không thể chuyển từ CANCELLED
-            );
+            TaskStatus.DONE, EnumSet.of(TaskStatus.IN_PROGRESS),
+            TaskStatus.CANCELLED, EnumSet.noneOf(TaskStatus.class)
+    );
 
-    // Tạm thời tắt cache để tránh lỗi LinkedHashMap cast to Page
-    // @Cacheable(
-    //         value = "cache-task-lists",
-    //         key = "'all_'+#pageable.pageNumber+'_'+#pageable.pageSize+'_'+#pageable.sort+'_'+#filter",
-    //         cacheManager = "redisCacheManager")
     @Override
     public PageResponse<TaskResponse> getAllTasks(TaskFilterRequest filter, Pageable pageable) {
-        // Sử dụng Specification để xây dựng query động
-        log.info("Getting all tasks for filter {}", filter);
         Specification<TaskEntity> spec = TaskSpecification.fromFilter(filter);
+        // Lưu ý: Đảm bảo Repository dùng @EntityGraph hoặc JOIN FETCH trong findAllWithFilter để tránh N+1
         Page<TaskEntity> taskPage = taskRepository.findAllWithFilter(spec, pageable);
-
-        Page<TaskResponse> dtoPage = taskPage.map(taskMapper::toTaskResponse);
-
-        return new PageResponse<>(
-                dtoPage.getContent(),
-                dtoPage.getNumber(),
-                dtoPage.getSize(),
-                dtoPage.getTotalElements(),
-                dtoPage.getTotalPages(),
-                dtoPage.isLast());
+        return mapToPageResponse(taskPage);
     }
 
     @Override
     public PageResponse<TaskResponse> getMyTasks(Pageable pageable) {
-        log.info("Getting tasks for current user");
         Long currentUserId = AuthenticationUtils.getCurrentUserId();
-
-        // Tìm tất cả tasks mà user hiện tại là assignee HOẶC là người tạo (owner của project)
         Page<TaskEntity> taskPage = taskRepository.findByAssigneesIdOrProjectOwnerId(currentUserId, pageable);
-
-        Page<TaskResponse> dtoPage = taskPage.map(taskMapper::toTaskResponse);
-
-        return new PageResponse<>(
-                dtoPage.getContent(),
-                dtoPage.getNumber(),
-                dtoPage.getSize(),
-                dtoPage.getTotalElements(),
-                dtoPage.getTotalPages(),
-                dtoPage.isLast());
+        return mapToPageResponse(taskPage);
     }
 
     @Override
     @Cacheable(value = "cache-task-details", key = "#id", cacheManager = "redisCacheManager")
     @PreAuthorize("hasRole('ADMIN') or @taskSecurityService.canAccessTask(#id)")
     public TaskResponse getTaskById(Long id) {
-        log.info("Getting task with id {}", id);
         TaskEntity task = findTaskById(id);
         return taskMapper.toTaskResponse(task);
     }
@@ -114,35 +84,27 @@ public class TaskServiceImpl implements TaskService {
     @Transactional
     @CacheEvict(value = "cache-task-lists", allEntries = true, cacheManager = "redisCacheManager")
     public TaskResponse createTask(CreateTaskRequest request) {
-        // TODO: Cần kiểm tra xem user hiện tại có quyền tạo task trong project này không
-        log.info("Creating task {}", request);
-        ProjectEntity project = projectRepository
-                .findById(request.projectId())
+        Long currentUserId = AuthenticationUtils.getCurrentUserId();
+
+        ProjectEntity project = projectRepository.findById(request.projectId())
                 .orElseThrow(() -> new AppException(ErrorCode.PROJECT_NOT_EXISTED));
-        if (!project.getOwner().getId().equals(AuthenticationUtils.getCurrentUserId())) {
+
+        // Validate: Người tạo task phải là Owner hoặc Member của project (Tùy logic, ở đây giữ logic Owner)
+        if (!project.getOwner().getId().equals(currentUserId)) {
+            // Mở rộng: && !project.getMembers().contains(currentUser)
             throw new AppException(ErrorCode.USER_NOT_PROJECT_OWNER);
         }
-
-        Set<UserEntity> assignees = new HashSet<>();
-        request.assignees().forEach(u -> {
-            UserEntity user =
-                    userRepository.findById(u).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
-            assignees.add(user);
-        });
+        Set<UserEntity> assignees = fetchAndValidateAssignees(request.assignees(), project);
 
         TaskEntity task = taskMapper.toEntity(request);
         task.setProject(project);
         task.setAssignees(assignees);
-        task.setStatus(TaskStatus.TODO); // Luôn bắt đầu là TODO
+        task.setStatus(TaskStatus.TODO);
 
         TaskEntity savedTask = taskRepository.save(task);
-        log.info("Created task {}", savedTask);
 
-        assignees.forEach(u -> {
-            if (u.getId().equals(project.getOwner().getId())) return; // Không gửi thông báo cho người tạo
-            eventPublisher.publishEvent(
-                    new TaskEvent(savedTask, project.getOwner(), u, NotificationType.TASK_ASSIGNED));
-        });
+        // Notify
+        notifyAssignees(savedTask, project.getOwner(), assignees, NotificationType.TASK_ASSIGNED);
 
         return taskMapper.toTaskResponse(savedTask);
     }
@@ -153,32 +115,24 @@ public class TaskServiceImpl implements TaskService {
     @CacheEvict(value = "cache-task-lists", allEntries = true, cacheManager = "redisCacheManager")
     @PreAuthorize("hasRole('ADMIN') or @taskSecurityService.canAccessTask(#id)")
     public TaskResponse updateTask(Long id, UpdateTaskRequest request) {
-        log.info("Updating task id {} with {}", id, request);
         TaskEntity existingTask = findTaskById(id);
 
-        // Business Logic: Kiểm tra chuyển đổi trạng thái
         validateStatusTransition(existingTask.getStatus(), request.status());
 
-        Set<UserEntity> assignees = new HashSet<>();
-        request.assignees().forEach(u -> {
-            UserEntity user =
-                    userRepository.findById(u).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
-            assignees.add(user);
-        });
-        existingTask.setAssignees(assignees);
-        // Map các trường còn lại
-        taskMapper.updateEntityFromRequest(request, existingTask);
+        Set<UserEntity> newAssignees = fetchAndValidateAssignees(request.assignees(), existingTask.getProject());
+        existingTask.setAssignees(newAssignees);
 
+        taskMapper.updateEntityFromRequest(request, existingTask);
         TaskEntity updatedTask = taskRepository.save(existingTask);
 
-        UserEntity currentUser = userRepository
-                .findById(Objects.requireNonNull(AuthenticationUtils.getCurrentUserId()))
+        // Notify (Lấy ID từ Security Context để tránh query DB thừa)
+        Long currentUserId = AuthenticationUtils.getCurrentUserId();
+        // Cần tạo proxy user entity chỉ chứa ID để pass vào event (nếu NotificationService xử lý được)
+        // Hoặc query nhẹ user hiện tại
+        UserEntity currentUser = userRepository.findById(currentUserId)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
-        log.info("Updated task {}", updatedTask);
-        assignees.forEach(u -> {
-            if (u.getId().equals(currentUser.getId())) return; // Không gửi thông báo cho người cập nhật
-            eventPublisher.publishEvent(new TaskEvent(updatedTask, currentUser, u, NotificationType.TASK_UPDATED));
-        });
+
+        notifyAssignees(updatedTask, currentUser, newAssignees, NotificationType.TASK_UPDATED);
 
         return taskMapper.toTaskResponse(updatedTask);
     }
@@ -189,30 +143,19 @@ public class TaskServiceImpl implements TaskService {
     @CacheEvict(
             value = {"cache-task-details", "cache-task-lists"},
             key = "#id",
-            allEntries = true,
+            allEntries = true, // Clear list cache vì status thay đổi ảnh hưởng đến filter/sort
             cacheManager = "redisCacheManager")
     public TaskResponse updateTaskStatus(Long id, UpdateTaskStatusRequest request) {
-        log.info("Updating task status for id {} to {}", id, request.status());
         TaskEntity existingTask = findTaskById(id);
-
-        // Validate status transition
         validateStatusTransition(existingTask.getStatus(), request.status());
 
-        // Only update the status
         existingTask.setStatus(request.status());
-
         TaskEntity updatedTask = taskRepository.save(existingTask);
 
-        UserEntity currentUser = userRepository
-                .findById(Objects.requireNonNull(AuthenticationUtils.getCurrentUserId()))
-                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
-        log.info("Updated task status {}", updatedTask);
-
-        // Notify assignees about status change
-        existingTask.getAssignees().forEach(u -> {
-            if (u.getId().equals(currentUser.getId())) return;
-            eventPublisher.publishEvent(new TaskEvent(updatedTask, currentUser, u, NotificationType.TASK_UPDATED));
-        });
+        // Notify
+        Long currentUserId = AuthenticationUtils.getCurrentUserId();
+        UserEntity currentUser = userRepository.findById(currentUserId).orElseThrow();
+        notifyAssignees(updatedTask, currentUser, existingTask.getAssignees(), NotificationType.TASK_UPDATED);
 
         return taskMapper.toTaskResponse(updatedTask);
     }
@@ -220,82 +163,92 @@ public class TaskServiceImpl implements TaskService {
     @Override
     @Transactional
     @PreAuthorize("hasRole('ADMIN') or @taskSecurityService.canAccessTask(#id)")
-    @CacheEvict(
-            value = {"cache-task-details", "cache-task-lists"},
-            key = "#id",
-            allEntries = true,
-            cacheManager = "redisCacheManager")
+    @CacheEvict(value = {"cache-task-details", "cache-task-lists"}, key = "#id", allEntries = true, cacheManager = "redisCacheManager")
     public void deleteTask(Long id) {
-        log.info("Soft deleting task with id {}", id);
-        // Verify task exists before deleting
-        findTaskById(id);
+        // FIX 3: Dùng existsById thay vì findById để nhẹ DB
+        if (!taskRepository.existsById(id)) {
+            throw new AppException(ErrorCode.TASK_NOT_EXISTED);
+        }
         taskRepository.softDeleteByIds(List.of(id));
     }
 
     @Override
+    @Transactional
+    @PreAuthorize("hasRole('ADMIN')") // Thường chỉ admin/owner mới restore
     public void restoreTask(Long id) {
-        log.info("Restoring task with id {}", id);
-        // Verify task exists before restoring
-        findTaskById(id);
+        if (!taskRepository.existsById(id)) {
+            throw new AppException(ErrorCode.TASK_NOT_EXISTED);
+        }
         taskRepository.restoreById(id);
     }
 
     @Override
-    public PageResponse<TaskResponse> getAllMySoftDeletedTasks(int page, int size) {
-        log.info("Getting all my soft deleted tasks - page: {}, size: {}", page, size);
-
+    public PageResponse<TaskResponse> getAllMySoftDeletedTasks(Pageable pageable) {
         Long currentUserId = AuthenticationUtils.getCurrentUserId();
-        Pageable pageable = PageRequest.of(page, size);
-
-        Page<TaskEntity> taskPage = taskRepository.findAllSoftDeletedByOwnerId(currentUserId, pageable);
-
-        List<TaskResponse> taskResponses =
-                taskPage.getContent().stream().map(taskMapper::toTaskResponse).collect(Collectors.toList());
-
-        return new PageResponse<>(
-                taskResponses,
-                taskPage.getNumber(),
-                taskPage.getSize(),
-                taskPage.getTotalElements(),
-                taskPage.getTotalPages(),
-                taskPage.isLast());
+        return mapToPageResponse(taskRepository.findAllSoftDeletedByOwnerId(currentUserId, pageable));
     }
 
     @Override
     @PreAuthorize("hasRole('ADMIN')")
-    public PageResponse<TaskResponse> getAllSoftDeletedTasks(int page, int size) {
-        log.info("Getting all soft deleted tasks - page: {}, size: {}", page, size);
-
-        Pageable pageable = PageRequest.of(page, size);
-        Page<TaskEntity> taskPage = taskRepository.findAllSoftDeleted(pageable);
-
-        List<TaskResponse> taskResponses =
-                taskPage.getContent().stream().map(taskMapper::toTaskResponse).collect(Collectors.toList());
-
-        return new PageResponse<>(
-                taskResponses,
-                taskPage.getNumber(),
-                taskPage.getSize(),
-                taskPage.getTotalElements(),
-                taskPage.getTotalPages(),
-                taskPage.isLast());
+    public PageResponse<TaskResponse> getAllSoftDeletedTasks(Pageable pageable) {
+        return mapToPageResponse(taskRepository.findAllSoftDeleted(pageable));
     }
 
     // --- Helper Methods ---
 
     private TaskEntity findTaskById(Long id) {
-        log.info("Finding task with id {}", id);
         return taskRepository.findById(id).orElseThrow(() -> new AppException(ErrorCode.TASK_NOT_EXISTED));
     }
 
+    /**
+     * Helper: Fetch users by IDs in ONE query and validate project membership
+     */
+    private Set<UserEntity> fetchAndValidateAssignees(Set<Long> assigneeIds, ProjectEntity project) {
+        if (assigneeIds == null || assigneeIds.isEmpty()) {
+            return new HashSet<>();
+        }
+
+        // 1. Fetch all users in ONE query
+        List<UserEntity> users = userRepository.findAllById(assigneeIds);
+        if (users.size() != assigneeIds.size()) {
+            throw new AppException(ErrorCode.USER_NOT_EXISTED); // Có ID không tồn tại
+        }
+        for (UserEntity user : users) {
+            // Check Owner hoặc Member
+            boolean isOwner = project.getOwner().getId().equals(user.getId());
+            boolean isMember = project.getMembers().stream().anyMatch(m -> m.getId().equals(user.getId()));
+
+            if (!isOwner && !isMember) {
+                throw new AppException(ErrorCode.USER_NOT_PROJECT_MEMBER);
+            }
+        }
+        return new HashSet<>(users);
+    }
+
     private void validateStatusTransition(TaskStatus oldStatus, TaskStatus newStatus) {
-        if (oldStatus == newStatus) return; // Không thay đổi
-
-        Set<TaskStatus> allowedTransitions =
-                VALID_TRANSITIONS.getOrDefault(oldStatus, EnumSet.noneOf(TaskStatus.class));
-
-        if (!allowedTransitions.contains(newStatus)) {
+        if (oldStatus == newStatus) return;
+        Set<TaskStatus> allowed = VALID_TRANSITIONS.getOrDefault(oldStatus, EnumSet.noneOf(TaskStatus.class));
+        if (!allowed.contains(newStatus)) {
             throw new AppException(ErrorCode.INVALID_TASK_STATUS_TRANSITION);
         }
+    }
+
+    private void notifyAssignees(TaskEntity task, UserEntity actor, Set<UserEntity> recipients, NotificationType type) {
+        recipients.forEach(u -> {
+            if (!u.getId().equals(actor.getId())) {
+                eventPublisher.publishEvent(new TaskEvent(task, actor, u, type));
+            }
+        });
+    }
+
+    private PageResponse<TaskResponse> mapToPageResponse(Page<TaskEntity> page) {
+        List<TaskResponse> responses = page.getContent().stream().map(taskMapper::toTaskResponse).toList();
+        return new PageResponse<>(
+                responses,
+                page.getNumber(),
+                page.getSize(),
+                page.getTotalElements(),
+                page.getTotalPages(),
+                page.isLast());
     }
 }

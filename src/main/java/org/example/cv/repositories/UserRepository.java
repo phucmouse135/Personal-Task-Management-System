@@ -15,6 +15,10 @@ public interface UserRepository extends BaseRepository<UserEntity, Long> {
     @Query("SELECT CASE WHEN COUNT(u) > 0 THEN true ELSE false END FROM UserEntity u WHERE u.username = ?1")
     boolean existsByUsername(String username);
 
+    // existsByEmail
+    @Query("SELECT CASE WHEN COUNT(u) > 0 THEN true ELSE false END FROM UserEntity u WHERE u.email = ?1")
+    boolean existsByEmail(String email);
+
     // findAllByPaginationAndSearch
     @Query(value = """
             SELECT * FROM users u 

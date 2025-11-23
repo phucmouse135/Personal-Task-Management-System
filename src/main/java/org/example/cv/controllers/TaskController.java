@@ -6,121 +6,129 @@ import org.example.cv.models.requests.CreateTaskRequest;
 import org.example.cv.models.requests.TaskFilterRequest;
 import org.example.cv.models.requests.UpdateTaskRequest;
 import org.example.cv.models.requests.UpdateTaskStatusRequest;
+import org.example.cv.models.responses.ApiResponse; // Import class wrapper của bạn
 import org.example.cv.models.responses.PageResponse;
 import org.example.cv.models.responses.TaskResponse;
 import org.example.cv.services.TaskService;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/tasks")
 @RequiredArgsConstructor
-@Tag(name = "Task Controller", description = "API cho quản lý Công việc")
+@Tag(name = "Task Controller", description = "API quản lý công việc")
 public class TaskController {
 
     private final TaskService taskService;
 
-    @Operation(summary = "Lấy danh sách task (có lọc, sắp xếp, phân trang)")
-    @ApiResponse(responseCode = "200", description = "Thành công")
+    @Operation(summary = "Lấy danh sách task (Search & Filter)")
     @GetMapping
-    public ResponseEntity<PageResponse<TaskResponse>> getAllTasks(
+    public ApiResponse<PageResponse<TaskResponse>> getAllTasks(
             @ParameterObject @Valid TaskFilterRequest filter,
-            @ParameterObject @PageableDefault(size = 20, sort = "deadline") Pageable pageable) {
-        PageResponse<TaskResponse> response = taskService.getAllTasks(filter, pageable);
-        return ResponseEntity.ok(response);
+            @ParameterObject @PageableDefault(size = 10, sort = "deadline", direction = Sort.Direction.ASC) Pageable pageable) {
+        return ApiResponse.<PageResponse<TaskResponse>>builder()
+                .code(200)
+                .result(taskService.getAllTasks(filter, pageable))
+                .message("Lấy danh sách task thành công")
+                .build();
     }
 
-    @Operation(summary = "Lấy danh sách task của người dùng hiện tại (có phân trang)")
-    @ApiResponse(responseCode = "200", description = "Thành công")
+    @Operation(summary = "Lấy task của tôi")
     @GetMapping("/my-tasks")
-    public ResponseEntity<PageResponse<TaskResponse>> getMyTasks(
-            @ParameterObject @PageableDefault(size = 20, sort = "deadline") Pageable pageable) {
-        PageResponse<TaskResponse> response = taskService.getMyTasks(pageable);
-        return ResponseEntity.ok(response);
+    public ApiResponse<PageResponse<TaskResponse>> getMyTasks(
+            @ParameterObject @PageableDefault(size = 10, sort = "deadline", direction = Sort.Direction.ASC) Pageable pageable) {
+        return ApiResponse.<PageResponse<TaskResponse>>builder()
+                .code(200)
+                .result(taskService.getMyTasks(pageable))
+                .build();
     }
 
-    @Operation(summary = "Tạo một task mới")
-    @ApiResponse(responseCode = "201", description = "Tạo thành công")
-    @ApiResponse(responseCode = "400", description = "Dữ liệu không hợp lệ")
+    @Operation(summary = "Tạo task mới")
     @PostMapping
-    public ResponseEntity<TaskResponse> createTask(@Valid @RequestBody CreateTaskRequest request) {
-        TaskResponse response = taskService.createTask(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    public ApiResponse<TaskResponse> createTask(@Valid @RequestBody CreateTaskRequest request) {
+        return ApiResponse.<TaskResponse>builder()
+                .code(HttpStatus.CREATED.value()) // 201
+                .result(taskService.createTask(request))
+                .message("Tạo task thành công")
+                .build();
     }
 
-    @Operation(summary = "Lấy chi tiết một task theo ID")
-    @ApiResponse(responseCode = "200", description = "Thành công")
-    @ApiResponse(responseCode = "404", description = "Không tìm thấy Task")
+    @Operation(summary = "Xem chi tiết task")
     @GetMapping("/{id}")
-    public ResponseEntity<TaskResponse> getTaskById(@PathVariable Long id) {
-        TaskResponse response = taskService.getTaskById(id);
-        return ResponseEntity.ok(response);
+    public ApiResponse<TaskResponse> getTaskById(@PathVariable Long id) {
+        return ApiResponse.<TaskResponse>builder()
+                .code(200)
+                .result(taskService.getTaskById(id))
+                .build();
     }
 
-    @Operation(summary = "Cập nhật một task (PUT)")
-    @ApiResponse(responseCode = "200", description = "Cập nhật thành công")
-    @ApiResponse(responseCode = "404", description = "Không tìm thấy Task")
-    @ApiResponse(responseCode = "403", description = "Không có quyền truy cập")
+    @Operation(summary = "Cập nhật thông tin task")
     @PutMapping("/{id}")
-    public ResponseEntity<TaskResponse> updateTask(
+    public ApiResponse<TaskResponse> updateTask(
             @PathVariable Long id, @Valid @RequestBody UpdateTaskRequest request) {
-        TaskResponse response = taskService.updateTask(id, request);
-        return ResponseEntity.ok(response);
+        return ApiResponse.<TaskResponse>builder()
+                .code(200)
+                .result(taskService.updateTask(id, request))
+                .message("Cập nhật task thành công")
+                .build();
     }
 
-    @Operation(summary = "Cập nhật trạng thái task (PATCH) - cho assignee")
-    @ApiResponse(responseCode = "200", description = "Cập nhật trạng thái thành công")
-    @ApiResponse(responseCode = "404", description = "Không tìm thấy Task")
-    @ApiResponse(responseCode = "403", description = "Không có quyền truy cập")
+    @Operation(summary = "Cập nhật trạng thái task (Assignee)")
     @PatchMapping("/{id}/status")
-    public ResponseEntity<TaskResponse> updateTaskStatus(
+    public ApiResponse<TaskResponse> updateTaskStatus(
             @PathVariable Long id, @Valid @RequestBody UpdateTaskStatusRequest request) {
-        TaskResponse response = taskService.updateTaskStatus(id, request);
-        return ResponseEntity.ok(response);
+        return ApiResponse.<TaskResponse>builder()
+                .code(200)
+                .result(taskService.updateTaskStatus(id, request))
+                .message("Cập nhật trạng thái thành công")
+                .build();
     }
 
-    @Operation(summary = "Xóa một task")
-    @ApiResponse(responseCode = "204", description = "Xóa thành công")
-    @ApiResponse(responseCode = "404", description = "Không tìm thấy Task")
-    @ApiResponse(responseCode = "403", description = "Không có quyền truy cập")
+    @Operation(summary = "Xóa task (Soft Delete)")
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteTask(@PathVariable Long id) {
+    public ApiResponse<Void> deleteTask(@PathVariable Long id) {
         taskService.deleteTask(id);
-        return ResponseEntity.noContent().build();
+        return ApiResponse.<Void>builder()
+                .code(204) // No Content
+                .message("Xóa task thành công")
+                .build();
     }
 
-    @Operation(summary = "Khôi phục một task đã xóa")
-    @ApiResponse(responseCode = "204", description = "Khôi phục thành công")
-    @ApiResponse(responseCode = "404", description = "Không tìm thấy Task")
-    @ApiResponse(responseCode = "403", description = "Không có quyền truy cập")
+    @Operation(summary = "Khôi phục task")
     @PatchMapping("/{id}/restore")
-    public ResponseEntity<Void> restoreTask(@PathVariable Long id) {
+    public ApiResponse<Void> restoreTask(@PathVariable Long id) {
         taskService.restoreTask(id);
-        return ResponseEntity.noContent().build();
+        return ApiResponse.<Void>builder()
+                .code(200)
+                .message("Khôi phục task thành công")
+                .build();
     }
 
-    @Operation(summary = "Lấy danh sách Task đã xóa mềm")
-    @ApiResponse(responseCode = "200", description = "Lấy danh sách thành công")
+    @Operation(summary = "Lấy danh sách đã xóa (Admin/User)")
     @GetMapping("/soft-deleted")
-    public ResponseEntity<PageResponse<TaskResponse>> getSoftDeletedTasks(
+    public ApiResponse<PageResponse<TaskResponse>> getSoftDeletedTasks(
             @RequestParam(defaultValue = "my") String scope,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
-        PageResponse<TaskResponse> response;
-        if ("all".equals(scope)) {
-            response = taskService.getAllSoftDeletedTasks(page, size);
+            @ParameterObject @PageableDefault(sort = "deletedAt", direction = Sort.Direction.DESC) Pageable pageable) {
+
+        PageResponse<TaskResponse> result;
+        if ("all".equalsIgnoreCase(scope)) {
+            result = taskService.getAllSoftDeletedTasks(pageable); // Service cần nhận Pageable
         } else {
-            response = taskService.getAllMySoftDeletedTasks(page, size);
+            result = taskService.getAllMySoftDeletedTasks(pageable); // Service cần nhận Pageable
         }
-        return ResponseEntity.ok(response);
+
+        return ApiResponse.<PageResponse<TaskResponse>>builder()
+                .code(200)
+                .result(result)
+                .message("Lấy danh sách đã xóa thành công")
+                .build();
     }
 }
