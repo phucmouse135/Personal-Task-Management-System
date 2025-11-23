@@ -11,7 +11,6 @@ import org.springframework.web.servlet.HandlerInterceptor;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import reactor.util.annotation.NonNullApi;
 
 @Component
 @Slf4j
@@ -20,7 +19,7 @@ public class AuditLogInterceptor implements HandlerInterceptor {
     private final ApplicationEventPublisher publisher;
 
     @Override
-    public boolean preHandle(HttpServletRequest request,  HttpServletResponse response, Object handler)
+    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
             throws Exception {
         log.info("AuditLogInterceptor: preHandle called for URI: {}", request.getRequestURI());
         return true;

@@ -6,6 +6,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 @Repository
 public interface NotificationRepository extends BaseRepository<NotificationEntity, Long> {
@@ -23,7 +24,8 @@ public interface NotificationRepository extends BaseRepository<NotificationEntit
     /**
      * Đánh dấu tất cả là đã đọc cho user
      */
-    @Modifying
+    @Transactional
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("UPDATE NotificationEntity n SET n.isRead = true WHERE n.recipient.id = :recipientId AND n.isRead = false")
     void markAllAsReadForRecipient(Long recipientId);
 }

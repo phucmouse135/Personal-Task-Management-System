@@ -8,6 +8,7 @@ import org.example.cv.event.AuditLogListener;
 import org.example.cv.event.Auditable;
 import org.example.cv.models.entities.base.BaseEntity;
 import org.example.cv.utils.security.Ownable;
+import org.hibernate.annotations.BatchSize;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
@@ -58,6 +59,7 @@ public class ProjectEntity extends BaseEntity implements Ownable, Auditable {
             joinColumns = @JoinColumn(name = "project_id"),
             inverseJoinColumns = @JoinColumn(name = "user_id"))
     @Schema(description = "Members of the project")
+    @BatchSize(size = 50)
     private java.util.Set<UserEntity> members;
 
     @Override

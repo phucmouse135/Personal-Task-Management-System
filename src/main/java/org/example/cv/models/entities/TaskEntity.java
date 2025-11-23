@@ -12,6 +12,7 @@ import org.example.cv.constants.TaskStatus;
 import org.example.cv.event.AuditLogListener;
 import org.example.cv.event.Auditable;
 import org.example.cv.models.entities.base.BaseEntity;
+import org.hibernate.annotations.BatchSize;
 
 import lombok.*;
 
@@ -60,6 +61,7 @@ public class TaskEntity extends BaseEntity implements Auditable {
             name = "task_assignees",
             joinColumns = @JoinColumn(name = "task_id"),
             inverseJoinColumns = @JoinColumn(name = "user_id"))
+    @BatchSize(size = 50)
     private Set<UserEntity> assignees;
 
     @Override

@@ -16,17 +16,21 @@ public interface UserRepository extends BaseRepository<UserEntity, Long> {
     boolean existsByUsername(String username);
 
     // findAllByPaginationAndSearch
-    @Query("SELECT u FROM UserEntity u WHERE "
-            + "(u.username LIKE %?1% OR u.email LIKE %?1% OR u.lastName LIKE %?1% OR u.firstName LIKE %?1%) "
-            + "AND u.deletedAt IS NULL")
-    @EntityGraph(attributePaths = {"roles"})
+    @Query(value = """
+            SELECT * FROM users u 
+            WHERE to_tsvector('english', username || ' ' || email || ' ' || first_name || ' ' || last_name)) @@ plainto_tsquery('english', ?1)
+            AND u.deleted_at IS NULL
+            """,
+            countQuery = """
+            SELECT COUNT(*) FROM users u 
+            WHERE to_tsvector('english', username || ' ' || email || ' ' || first_name || ' ' || last_name)) @@ plainto_tsquery('english', ?1)
+            AND u.deleted_at IS NULL
+    """ , nativeQuery = true)
     Page<UserEntity> findAllByPaginationAndSearch(String search, Pageable pageable);
 
-    // findByUsername
     @EntityGraph(attributePaths = {"roles"})
     Optional<UserEntity> findByUsername(String username);
 
-    // findByEmail
     @EntityGraph(attributePaths = {"roles"})
     Optional<UserEntity> findByEmail(String email);
 }

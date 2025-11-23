@@ -7,6 +7,7 @@ import jakarta.validation.constraints.*;
 
 import org.example.cv.models.entities.base.BaseEntity;
 import org.example.cv.utils.security.Ownable;
+import org.hibernate.annotations.BatchSize;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
@@ -60,6 +61,7 @@ public class UserEntity extends BaseEntity implements Ownable {
     String email;
 
     @ManyToMany(fetch = FetchType.LAZY)
+    @BatchSize(size = 50)
     @JoinTable(
             name = "users_roles",
             joinColumns = @JoinColumn(name = "user_id"),

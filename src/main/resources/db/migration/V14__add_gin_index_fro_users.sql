@@ -1,0 +1,1 @@
+CREATE INDEX idx_gin_users on users using gin(to_tsvector('english', username || ' ' || email || ' ' || first_name || ' ' || last_name));

@@ -17,8 +17,6 @@ import org.example.cv.models.responses.AuthenticationResponse;
 import org.example.cv.models.responses.IntrospectResponse;
 import org.example.cv.repositories.InvalidedTokenRepository;
 import org.example.cv.repositories.UserRepository;
-import org.example.cv.repositories.httpclient.OutboundIdentityClient;
-import org.example.cv.repositories.httpclient.OutboundUserClient;
 import org.example.cv.services.AuthenticationService;
 import org.example.cv.services.EmailService;
 import org.springframework.beans.factory.annotation.Value;

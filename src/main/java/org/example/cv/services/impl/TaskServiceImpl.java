@@ -69,7 +69,7 @@ public class TaskServiceImpl implements TaskService {
         // Sử dụng Specification để xây dựng query động
         log.info("Getting all tasks for filter {}", filter);
         Specification<TaskEntity> spec = TaskSpecification.fromFilter(filter);
-        Page<TaskEntity> taskPage = taskRepository.findAll(spec, pageable);
+        Page<TaskEntity> taskPage = taskRepository.findAllWithFilter(spec, pageable);
 
         Page<TaskResponse> dtoPage = taskPage.map(taskMapper::toTaskResponse);
 

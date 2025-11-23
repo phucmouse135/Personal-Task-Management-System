@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 
 import org.example.cv.models.entities.base.BaseEntity;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -15,6 +16,7 @@ import lombok.experimental.FieldDefaults;
 @AllArgsConstructor
 @NoArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
+@Schema(name = "ChatMessageEntity", description = "Entity representing a chat message")
 public class ChatMessageEntity extends BaseEntity {
 
     @Id
@@ -22,6 +24,7 @@ public class ChatMessageEntity extends BaseEntity {
     Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @Schema(description = "Sender of the chat message")
     @JoinColumn(name = "sender_id", nullable = false)
     UserEntity sender;
 

@@ -1,0 +1,1 @@
+create index idx_project_fts on projects using gin(to_tsvector('english' , name || ' ' || coalesce(description, '')));
