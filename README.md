@@ -1,8 +1,7 @@
 # Personal Task Management System
 
 ## Tổng quan dự án
-**Personal Task Management System** là một backend mạnh mẽ xây dựng bằng **Java Spring Boot**, hỗ trợ quản lý **user, project, task, notification real-time, chat WebSocket**, và **tích hợp thanh toán VNPAY**.  
-Dự án mô phỏng một sản phẩm thực tế, phù hợp để đưa vào **portfolio** hoặc **CV Backend Developer**.
+**Personal Task Management System**  xây dựng bằng **Java Spring Boot**, hỗ trợ quản lý **user, project, task, notification real-time, chat WebSocket**, và **tích hợp thanh toán VNPAY**.
 
 ---
 
@@ -40,7 +39,7 @@ Dự án mô phỏng một sản phẩm thực tế, phù hợp để đưa vào
 - Chat private hoặc nhóm theo dự án.  
 - STOMP endpoint `/ws` với topic `/topic/messages`.  
 
-### 💳 Payment Integration (VNPAY)
+### 💳 Payment Integration (VNPAY) - UNCOMPLETED
 - Tạo order thanh toán cho task hoặc dịch vụ.  
 - Callback xử lý kết quả thanh toán từ VNPAY.  
 - Trạng thái: `PENDING`, `SUCCESS`, `FAILED`.  
