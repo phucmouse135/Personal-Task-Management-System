@@ -31,12 +31,12 @@ spring:
       client:
         registration:
             google:
-                client-id: ${GOOGLE_CLIENT_ID:101718001419-32m56mclhudonq2bg6ljknblod4rtsmn.apps.googleusercontent.com}
-                client-secret: ${GOOGLE_CLIENT_SECRET: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}
+                client-id: ${GOOGLE_CLIENT_ID}
+                client-secret: ${GOOGLE_CLIENT_SECRET}
                 scope:
                 - email
                 - profile
-                redirect-uri: ${GOOGLE_REDIRECT_URI:http://localhost:8080/login/oauth2/code/google}
+                redirect-uri: ${GOOGLE_REDIRECT_URI}
         provider:
             google:
                 issuer-uri: https://accounts.google.com
@@ -47,14 +47,14 @@ spring:
   mail:
     host: ${SPRING_MAIL_HOST:smtp.gmail.com}
     port: ${SPRING_MAIL_PORT:587}
-    username: ${SPRING_MAIL_USERNAME:phucchuot37@gmail.com}
-    password: ${SPRING_MAIL_PASSWORD:apppassword}
+    username: ${SPRING_MAIL_USERNAME}
+    password: ${SPRING_MAIL_PASSWORD}
     properties:
         mail:
             smtp:
                 auth: true
                 starttls.enable: true
-    from: ${SPRING_MAIL_FROM:phucchuot37@gmail.com}
+    from: ${SPRING_MAIL_FROM}
 #  jackson:
 #    property-naming-strategy: SNAKE_CASE
 springdoc:
@@ -66,14 +66,14 @@ springdoc:
 
 
 jwt:
-  secret: ${JWT_SECRET:mysecretkeymysecretkeymysecretkey}
+  secret: ${JWT_SECRET}
   expiration: ${JWT_EXPIRATION:3600000} # 1 hour in milliseconds
 
 outbound:
   google:
-    client-id: ${GOOGLE_CLIENT_ID:101718001419-32m56mclhudonq2bg6ljknblod4rtsmn.apps.googleusercontent.com}
-    client-secret: ${GOOGLE_CLIENT_SECRET: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}
-    redirect-uri: ${GOOGLE_REDIRECT_URI:http://localhost:8080/login/oauth2/code/google}
+    client-id: ${GOOGLE_CLIENT_ID}
+    client-secret: ${GOOGLE_CLIENT_SECRET}
+    redirect-uri: ${GOOGLE_REDIRECT_URI}
 server:
   port: ${SERVER_PORT:8080}
 
@@ -147,8 +147,8 @@ giffing:
       body: '{"timestamp":"%s","status":429,"error":"Too Many Requests","message":"Rate limit exceeded. Please try again later.","path":"%s"}'
 payment:
   vnpay:
-    tmn-code: ${VNPAY_TMN_CODE:CGMCYSQW}
-    hash-secret: ${VNPAY_HASH_SECRET:WUBV2NA106C6GZMGTC5GBWV5N9E8Q9FY}
+    tmn-code: ${VNPAY_TMN_CODE}
+    hash-secret: ${VNPAY_HASH_SECRET}
     pay-url: https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
     return-url: http://localhost:8080/api/v1/payments/vnpay/return
     api-url: https://sandbox.vnpayment.vn/merchant_webapi/merchant.html
